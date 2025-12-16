@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
                 Text(text = "Heasdllo")
                 Text(text = "Hello123")
                 Text(text = "Hello")
-                Text(text = "Hsdasello222222")
+                Text(text = "Hsdasello222222")фывфыв
             } */
 
             Row(
