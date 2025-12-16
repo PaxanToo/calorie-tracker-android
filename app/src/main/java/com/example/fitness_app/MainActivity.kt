@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
            /* Column{ // можно делать контейнеры как и лейауты
+           // с помошью mofifier можно по разному их распологать и занимать есто на экране
                 Text(text = "Hello")
                 Text(text = "Heasdllo")
                 Text(text = "Hello123")
@@ -37,7 +38,7 @@ class MainActivity : ComponentActivity() {
                 Text(text = "Hsdasello222222")фывфыв
             } */
 
-            Row(
+            /*Row(
                 modifier = Modifier.
             background(Color.Red).fillMaxSize()
             )
@@ -48,6 +49,13 @@ class MainActivity : ComponentActivity() {
                 Text(text = "Hello")
                 Text(text = "Hsdasello222222")
             }
+             */
+
+
+
+
+
+
 
 
             }
