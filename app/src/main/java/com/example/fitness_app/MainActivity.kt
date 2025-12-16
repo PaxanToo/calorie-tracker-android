@@ -37,28 +37,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                ListItem("Енот","Мусор")
-                ListItem("Енот2","Мусор")
-                ListItem("Енот3","Мусор")
-                ListItem("Енотттт","Мусор")
-                ListItem("Енот","Мусор")
-                ListItem("Енот2","Мусор")
-                ListItem("Енот3","Мусор")
-                ListItem("Енотттт","Мусор")
-                ListItem("Енот","Мусор")
-                ListItem("Енот2","Мусор")
-                ListItem("Енот3","Мусор")
-                ListItem("Енотттт","Мусор")
-                ListItem("Енот","Мусор")
-                ListItem("Енот2","Мусор")
-                ListItem("Енот3","Мусор")
-                ListItem("Енотттт","Мусор")
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                ButtonItem()
+
             }
 
 
@@ -67,47 +55,29 @@ class MainActivity : ComponentActivity() {
     }
 
 @Composable
-private fun ListItem(name: String, Bfood: String){
-    var counter = remember{mutableStateOf(0)}
-    Card(
+private fun ButtonItem() {
+    val counter = remember { mutableStateOf(0) }
+    val color = remember { mutableStateOf(Color.Black) }
+
+
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(10.dp)
-            .clickable {
-                counter.value++
-            },
-        shape = RoundedCornerShape(15.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Gray)
-    ){
-       /* Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ){
-            Text(text = "test")
-
-        }
-        */
-
-        Box(){
-            Row(verticalAlignment = Alignment.CenterVertically){
-                Image(
-                    painter = painterResource(id = R.drawable.image_raccon),
-                    contentDescription = "картинка",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.padding(15.dp).size(64.dp).clip(CircleShape)
-
-                )
-
-                Column(){
-                    Text(text = counter.value.toString())
-                    Text(text = Bfood)
+            .size(100.dp)
+            .background(color = color.value, shape = CircleShape).clickable {
+                counter.value
+                when(++counter.value){
+                    10 -> color.value = Color.Yellow
                 }
+            },
+            contentAlignment = Alignment.Center
+    ) {
 
-            }
-        }
+        Text(text = counter.value.toString(), style = TextStyle(color = Color.White, fontSize = 20.sp))
+
     }
-
 }
+
+
 
 
 
