@@ -30,6 +30,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.fitness_app.ui.theme.Fitness_appTheme
 import androidx.compose.material3.CardDefaults
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
@@ -66,17 +68,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun ListItem(name: String, Bfood: String){
+    var counter = remember{mutableStateOf(0)}
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(10.dp)
             .clickable {
-                Log.d("My log", "Clicked")
-            }
-            .pointerInput (Unit){
-                detectDragGesturesAfterLongPress { change, dragAmount ->
-                    Log.d("MyLog", "Long press: $dragAmount")
-                }
+                counter.value++
             },
         shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Gray)
@@ -101,7 +99,7 @@ private fun ListItem(name: String, Bfood: String){
                 )
 
                 Column(){
-                    Text(text = name)
+                    Text(text = counter.value.toString())
                     Text(text = Bfood)
                 }
 
