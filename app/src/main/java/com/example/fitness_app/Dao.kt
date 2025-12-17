@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface Dao {
     @Insert
-    fun insertItemDb(item: ItemDb)
+    suspend fun insertItemDb(item: ItemDb)
     @Query("SELECT * FROM items")
     fun getAllItemDb(): Flow<List<ItemDb>>
 

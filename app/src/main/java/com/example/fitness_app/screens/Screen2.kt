@@ -10,12 +10,16 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.fitness_app.ItemDb
+import com.example.fitness_app.MainViewModel
 
 
 @Preview(showBackground = true)
@@ -25,7 +29,10 @@ fun Screen2Preview() {
 }
 
 @Composable
-fun Screen222() {
+fun Screen222(
+    viewModel: MainViewModel = viewModel()
+)
+{
 
 
     val height = remember { mutableStateOf("") }
@@ -34,15 +41,7 @@ fun Screen222() {
 
 
 
-
-
-
-
-
-
-
-
-
+    val items = viewModel.items.collectAsState().value
 
     Column(
         modifier = Modifier
@@ -53,6 +52,7 @@ fun Screen222() {
 
         Text("Введите данные", fontSize = 20.sp)
         Spacer(modifier = Modifier.height(16.dp))
+
 
         Text(text = result.value, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(16.dp))
@@ -66,6 +66,8 @@ fun Screen222() {
         )
         Spacer(modifier = Modifier.height(8.dp))
 
+
+
         OutlinedTextField(
             value = weight.value,
             onValueChange = { weight.value = it },
@@ -73,26 +75,49 @@ fun Screen222() {
         )
         Spacer(modifier = Modifier.height(16.dp))
 
+
+
         Button(onClick = {
-            val heightCm = height.value.toFloatOrNull()
-            val weightKg = weight.value.toFloatOrNull()
+            val heightCm = height.value.toIntOrNull()
+            val weightKg = weight.value.toIntOrNull()
 
             if (heightCm != null && weightKg != null && heightCm > 0) {
-                val heightM = heightCm / 100
+                val heightM = heightCm / 100f
                 val bmi = weightKg / (heightM * heightM)
 
-                result.value =
-                    "Рост: ${height.value} см\n" +
-                            "Вес: ${weight.value} кг\n" +
-                            "ИМТ: ${"%.2f".format(bmi)}"
+
+                viewModel.insertItem(
+                    ItemDb(
+                        name = "Запись",
+                        weight = weightKg,
+                        height = heightCm.toString()
+                    )
+                )
+
+
+                result.value = "ИМТ: ${"%.2f".format(bmi)}"
             } else {
-                result.value = "Введите корректные значения"
+                result.value = "Введите корректные данные"
             }
-        }) {
+
+
+        }){
             Text("Сохранить")
         }
+        Spacer(modifier = Modifier.height(24.dp))
+
+
+        Text("Сохранённые записи:")
+
+
+        items.forEach {
+            Text("Рост: ${it.height} Вес: ${it.weight}")
+        }
+
+
     }
 }
+
 
 
 
