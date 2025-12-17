@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import com.example.fitness_app.screens.Screen222
 
 @Composable
 fun Screen1() {
@@ -19,12 +20,7 @@ fun Screen1() {
 
 @Composable
 fun Screen2() {
-    Text(
-        modifier = Modifier.fillMaxSize().wrapContentHeight(),
-        text = "page2",
-        textAlign = TextAlign.Center
-
-    )
+    Screen222()
 }
 
 @Composable
