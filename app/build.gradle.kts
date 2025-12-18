@@ -56,6 +56,9 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.2.0")
 
 
+    implementation("com.airbnb.android:lottie-compose:6.0.0")
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
