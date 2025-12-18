@@ -7,15 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import com.example.fitness_app.screens.Screen222
+import com.example.fitness_app.screens.ScreenHome
 
 @Composable
 fun Screen1() {
-    Text(
-        modifier = Modifier.fillMaxSize().wrapContentHeight(),
-        text = "Home",
-        textAlign = TextAlign.Center
-
-    )
+    ScreenHome()
 }
 
 @Composable
