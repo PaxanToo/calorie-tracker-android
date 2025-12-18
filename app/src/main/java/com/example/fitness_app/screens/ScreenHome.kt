@@ -1,22 +1,39 @@
 package com.example.fitness_app.screens
 
+import android.content.Context
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+
+
+
+private val Context.dataStore by preferencesDataStore(name = "calories_prefs")
+private val CAL_GOAL = intPreferencesKey("cal_goal")
+private val CAL_EATEN = intPreferencesKey("cal_eaten")
+
+
+
 
 @Composable
 fun CircularProgressBar(
@@ -33,7 +50,7 @@ fun CircularProgressBar(
     val curPercentage by animateFloatAsState(
         targetValue = if (animationPlayed) percentage else 0f,
         animationSpec = tween(durationMillis = animDuration),
-        label = ""
+        label = "progress_animation"
     )
 
     LaunchedEffect(Unit) {
@@ -44,7 +61,6 @@ fun CircularProgressBar(
         contentAlignment = Alignment.Center,
         modifier = Modifier.size(radius * 2)
     ) {
-
         Canvas(modifier = Modifier.size(radius * 2)) {
             drawArc(
                 color = color,
@@ -67,17 +83,150 @@ fun CircularProgressBar(
     }
 }
 
-@Preview(showBackground = true)
 @Composable
 fun ScreenHome() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        CircularProgressBar(
-            percentage = 0.65f,
-            number = 2200
-        )
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    var goal by remember { mutableStateOf(2200) }
+    var eaten by remember { mutableStateOf(0) }
+
+    var goalInput by remember { mutableStateOf("") }
+    var eatenInput by remember { mutableStateOf("") }
+
+
+
+    LaunchedEffect(Unit) {
+        val prefs = context.dataStore.data.first()
+        goal = prefs[CAL_GOAL] ?: 2200
+        eaten = prefs[CAL_EATEN] ?: 0
     }
+
+
+    val progress = if (goal > 0) (eaten.toFloat() / goal).coerceIn(0f, 1f) else 0f
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+
+    ) {
+        Spacer(modifier = Modifier.height(20.dp))
+
+        CircularProgressBar(
+            percentage = progress,
+            number = goal,
+            color = Color(0xFF4CAF50)
+
+
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+
+
+        Text(
+            text = "$eaten / $goal ккал",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Medium
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+
+
+
+        OutlinedTextField(
+            value = goalInput,
+            onValueChange = { goalInput = it },
+            label = { Text("Цель (до 5000 ккал)") },
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default.copy(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+            ),
+            modifier = Modifier.fillMaxWidth(0.8f)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+
+
+        Button(
+            onClick = {
+                val value = goalInput.toIntOrNull()
+                if (value != null && value in 1..5000) {
+                    goal = value
+                    goalInput = ""
+                    scope.launch {
+                        context.dataStore.edit { preferences ->
+                            preferences[CAL_GOAL] = goal
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(0.8f)
+        ) {
+            Text("Сохранить цель")
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+
+
+
+        OutlinedTextField(
+            value = eatenInput,
+            onValueChange = { eatenInput = it },
+            label = { Text("Съедено калорий") },
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default.copy(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+            ),
+            modifier = Modifier.fillMaxWidth(0.8f)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth(0.8f)
+        ) {
+            Button(
+                onClick = {
+                    val value = eatenInput.toIntOrNull()
+                    if (value != null && value > 0) {
+                        eaten += value
+                        eatenInput = ""
+                        scope.launch {
+                            context.dataStore.edit { preferences ->
+                                preferences[CAL_EATEN] = eaten
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Добавить")
+            }
+
+            Button(
+                onClick = {
+                    eaten = 0
+                    scope.launch {
+                        context.dataStore.edit { preferences ->
+                            preferences[CAL_EATEN] = eaten
+                        }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Red,
+                    contentColor = Color.White
+                ),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Сбросить")
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ScreenHomePreview() {
+    ScreenHome()
 }
