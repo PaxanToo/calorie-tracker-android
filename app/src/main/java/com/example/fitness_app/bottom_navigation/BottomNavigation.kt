@@ -10,6 +10,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 
 
@@ -29,8 +35,23 @@ fun BottomNavigationBar(
 
     NavigationBar {
         items.forEach { item ->
+
+            val isSelected = currentRoute == item.route
+
+            val iconSize by animateDpAsState(
+                targetValue = if (isSelected) 30.dp else 22.dp,
+                label = "iconSize"
+            )
+
+            val iconColor by animateColorAsState(
+                targetValue = if (isSelected) Color(0xFF4CAF50) else Color.Gray,
+                label = "iconColor"
+            )
+
+
+
             NavigationBarItem(
-                selected = currentRoute == item.route,
+                selected = isSelected,
                 onClick = {
                     navController.navigate(item.route) {
                         popUpTo(Home.route)
@@ -40,11 +61,13 @@ fun BottomNavigationBar(
                 icon = {
                     Icon(
                         painter = painterResource(id = item.iconId),
-                        contentDescription = item.title
+                        contentDescription = item.title,
+                        modifier = Modifier.size(iconSize),
+                        tint = iconColor
                     )
                 },
                 label = {
-                    Text(text = item.title, fontSize = 10.sp)
+                    Text(text = item.title, fontSize = 10.sp, color = iconColor)
                 }
             )
         }
