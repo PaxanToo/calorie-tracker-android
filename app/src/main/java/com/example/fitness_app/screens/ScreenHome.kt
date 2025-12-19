@@ -1,6 +1,5 @@
 package com.example.fitness_app.screens
 
-import android.content.Context
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -19,21 +18,21 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.*
 import com.example.fitness_app.R
 import kotlinx.coroutines.delay
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import com.example.fitness_app.DATA.PrefsKeys
+import com.example.fitness_app.DATA.prefsDataStore
 
 
 
-private val Context.dataStore by preferencesDataStore(name = "calories_prefs")
-private val CAL_GOAL = intPreferencesKey("cal_goal")
-private val CAL_EATEN = intPreferencesKey("cal_eaten")
+
+
 
 
 
@@ -93,6 +92,7 @@ fun ScreenHome() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+
     var goal by remember { mutableStateOf(2200) }
     var eaten by remember { mutableStateOf(0) }
 
@@ -104,10 +104,12 @@ fun ScreenHome() {
 
 
 
+
+
     LaunchedEffect(Unit) {
-        val prefs = context.dataStore.data.first()
-        goal = prefs[CAL_GOAL] ?: 2200
-        eaten = prefs[CAL_EATEN] ?: 0
+        val prefs = context.prefsDataStore().data.first()
+        goal = prefs[PrefsKeys.CAL_GOAL] ?: 2200
+        eaten = prefs[PrefsKeys.CAL_EATEN] ?: 0
     }
 
 
@@ -119,9 +121,20 @@ fun ScreenHome() {
             showAchievement = true
             achievementShownForCurrentGoal = true
 
-            delay(2000) // показываем 2 секунды
+            delay(2000)
             showAchievement = false
+
+
+            scope.launch {
+                context.prefsDataStore().edit{
+                    prefs -> prefs[PrefsKeys.ACH_GOAL_REACHED] = true
+                }
+            }
         }
+
+
+
+
     }
 
 
@@ -177,8 +190,8 @@ fun ScreenHome() {
                         goal = value
                         goalInput = ""
                         scope.launch {
-                            context.dataStore.edit { preferences ->
-                                preferences[CAL_GOAL] = goal
+                            context.prefsDataStore().edit { preferences ->
+                                preferences[PrefsKeys.CAL_GOAL] = goal
                             }
                         }
                     }
@@ -215,8 +228,8 @@ fun ScreenHome() {
                             eaten += value
                             eatenInput = ""
                             scope.launch {
-                                context.dataStore.edit { preferences ->
-                                    preferences[CAL_EATEN] = eaten
+                                context.prefsDataStore().edit { preferences ->
+                                    preferences[PrefsKeys.CAL_EATEN] = eaten
                                 }
                             }
                         }
@@ -230,11 +243,12 @@ fun ScreenHome() {
                     onClick = {
 
                         achievementShownForCurrentGoal = false
-
                         eaten = 0
+
                         scope.launch {
-                            context.dataStore.edit { preferences ->
-                                preferences[CAL_EATEN] = eaten
+                            context.prefsDataStore().edit { prefs ->
+                                prefs[PrefsKeys.CAL_EATEN] = 0
+                                prefs[PrefsKeys.ACH_GOAL_REACHED] = false
                             }
                         }
                     },
