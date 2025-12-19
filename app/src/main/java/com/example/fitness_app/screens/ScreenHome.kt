@@ -25,12 +25,17 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.airbnb.lottie.compose.*
+import com.example.fitness_app.R
+import kotlinx.coroutines.delay
 
 
 
 private val Context.dataStore by preferencesDataStore(name = "calories_prefs")
 private val CAL_GOAL = intPreferencesKey("cal_goal")
 private val CAL_EATEN = intPreferencesKey("cal_eaten")
+
+
 
 
 
@@ -94,6 +99,9 @@ fun ScreenHome() {
     var goalInput by remember { mutableStateOf("") }
     var eatenInput by remember { mutableStateOf("") }
 
+    var showAchievement by remember { mutableStateOf(false) }
+    var achievementShownForCurrentGoal by remember { mutableStateOf(false) }
+
 
 
     LaunchedEffect(Unit) {
@@ -105,124 +113,162 @@ fun ScreenHome() {
 
     val progress = if (goal > 0) (eaten.toFloat() / goal).coerceIn(0f, 1f) else 0f
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
 
-    ) {
-        Spacer(modifier = Modifier.height(20.dp))
+    LaunchedEffect(eaten, goal) {
+        if (eaten >= goal && !achievementShownForCurrentGoal) {
+            showAchievement = true
+            achievementShownForCurrentGoal = true
 
-        CircularProgressBar(
-            percentage = progress,
-            number = goal,
-            color = Color(0xFF4CAF50)
-
-
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-
-
-        Text(
-            text = "$eaten / $goal ккал",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-
-
-
-
-        OutlinedTextField(
-            value = goalInput,
-            onValueChange = { goalInput = it },
-            label = { Text("Цель (до 5000 ккал)") },
-            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default.copy(
-                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-            ),
-            modifier = Modifier.fillMaxWidth(0.8f)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-
-
-        Button(
-            onClick = {
-                val value = goalInput.toIntOrNull()
-                if (value != null && value in 1..5000) {
-                    goal = value
-                    goalInput = ""
-                    scope.launch {
-                        context.dataStore.edit { preferences ->
-                            preferences[CAL_GOAL] = goal
-                        }
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth(0.8f)
-        ) {
-            Text("Сохранить цель")
+            delay(2000) // показываем 2 секунды
+            showAchievement = false
         }
-        Spacer(modifier = Modifier.height(24.dp))
+    }
 
 
+    Box(modifier = Modifier.fillMaxSize()){
 
-        OutlinedTextField(
-            value = eatenInput,
-            onValueChange = { eatenInput = it },
-            label = { Text("Съедено калорий") },
-            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default.copy(
-                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-            ),
-            modifier = Modifier.fillMaxWidth(0.8f)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
 
-
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth(0.8f)
         ) {
+            Spacer(modifier = Modifier.height(20.dp))
+
+            CircularProgressBar(
+                percentage = progress,
+                number = goal,
+                color = Color(0xFF4CAF50)
+
+
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+
+
+            Text(
+                text = "$eaten / $goal ккал",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+
+
+
+
+            OutlinedTextField(
+                value = goalInput,
+                onValueChange = { goalInput = it },
+                label = { Text("Цель (до 5000 ккал)") },
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default.copy(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                ),
+                modifier = Modifier.fillMaxWidth(0.8f)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+
+
             Button(
                 onClick = {
-                    val value = eatenInput.toIntOrNull()
-                    if (value != null && value > 0) {
-                        eaten += value
-                        eatenInput = ""
+                    val value = goalInput.toIntOrNull()
+                    if (value != null && value in 1..5000) {
+                        goal = value
+                        goalInput = ""
+                        scope.launch {
+                            context.dataStore.edit { preferences ->
+                                preferences[CAL_GOAL] = goal
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(0.8f)
+            ) {
+                Text("Сохранить цель")
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+
+
+
+            OutlinedTextField(
+                value = eatenInput,
+                onValueChange = { eatenInput = it },
+                label = { Text("Съедено калорий") },
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default.copy(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                ),
+                modifier = Modifier.fillMaxWidth(0.8f)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth(0.8f)
+            ) {
+                Button(
+                    onClick = {
+                        val value = eatenInput.toIntOrNull()
+                        if (value != null && value > 0) {
+                            eaten += value
+                            eatenInput = ""
+                            scope.launch {
+                                context.dataStore.edit { preferences ->
+                                    preferences[CAL_EATEN] = eaten
+                                }
+                            }
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Добавить")
+                }
+
+                Button(
+                    onClick = {
+
+                        achievementShownForCurrentGoal = false
+
+                        eaten = 0
                         scope.launch {
                             context.dataStore.edit { preferences ->
                                 preferences[CAL_EATEN] = eaten
                             }
                         }
-                    }
-                },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Добавить")
-            }
-
-            Button(
-                onClick = {
-                    eaten = 0
-                    scope.launch {
-                        context.dataStore.edit { preferences ->
-                            preferences[CAL_EATEN] = eaten
-                        }
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Red,
-                    contentColor = Color.White
-                ),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Сбросить")
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Сбросить")
+                }
             }
         }
+
+
+        if (showAchievement) {
+            val composition by rememberLottieComposition(
+                LottieCompositionSpec.RawRes(R.raw.lottie)
+            )
+
+            LottieAnimation(
+                composition = composition,
+                iterations = 1,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(250.dp)
+            )
+        }
+
+
+
+
     }
+
 }
 
 @Preview(showBackground = true)
