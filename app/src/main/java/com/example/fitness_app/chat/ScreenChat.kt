@@ -1,10 +1,12 @@
 package com.example.fitness_app.chat
 
+import androidx.compose.foundation.background
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.input.InputTransformation.Companion.keyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.mutableStateListOf
@@ -14,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 
 
@@ -25,13 +29,60 @@ fun getBotResponse(message: String): String {
         message.contains("помощь", ignoreCase = true) ->
             "Я могу помочь с подсчётом калорий и мотивацией "
 
-        message.contains("калори", ignoreCase = true) ->
+        message.contains("калории", ignoreCase = true) ->
             "Средняя дневная норма — около 2000–2500 ккал"
 
         else ->
             "Я пока учусь отвечать, попробуй написать «помощь»"
     }
 }
+
+
+
+
+@Composable
+fun ChatBubble(message: Message) {
+    val isUser = message.isUser
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (isUser) {
+            Arrangement.End
+        } else {
+            Arrangement.Start
+        }
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .padding(4.dp)
+                .background(
+                    color = if (isUser) {
+                        androidx.compose.ui.graphics.Color(0xFF4CAF50)
+                    } else {
+                        androidx.compose.ui.graphics.Color(0xFFE0E0E0)
+                    },
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                )
+                .padding(12.dp)
+        ) {
+            Text(
+                text = message.text,
+                color = if (isUser) {
+                    androidx.compose.ui.graphics.Color.White
+                } else {
+                    androidx.compose.ui.graphics.Color.Black
+                }
+            )
+        }
+    }
+}
+
+
+
+
+
+
 
 
 
@@ -50,7 +101,6 @@ fun ScreenChat() {
                 bottom = 180.dp)
     ) {
 
-        // Список сообщений
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
@@ -58,9 +108,7 @@ fun ScreenChat() {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(messages) { message ->
-                Text(
-                    text = if (message.isUser) "Вы: ${message.text}" else "Бот: ${message.text}"
-                )
+                ChatBubble(message)
             }
         }
 
@@ -74,7 +122,10 @@ fun ScreenChat() {
                 value = inputText,
                 onValueChange = { inputText = it },
                 modifier = Modifier.weight(1f),
-                label = { Text("Введите сообщение") }
+                label = { Text("Введите сообщение") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text
+                )
             )
 
             Button(
