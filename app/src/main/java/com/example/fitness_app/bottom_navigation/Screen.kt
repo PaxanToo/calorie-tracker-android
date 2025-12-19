@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import com.example.fitness_app.chat.ScreenChat
 import com.example.fitness_app.screens.Screen222
 import com.example.fitness_app.screens.ScreenAchievements
 import com.example.fitness_app.screens.ScreenHome
@@ -22,12 +23,7 @@ fun Screen2() {
 
 @Composable
 fun Screen3() {
-    Text(
-        modifier = Modifier.fillMaxSize().wrapContentHeight(),
-        text = "page3",
-        textAlign = TextAlign.Center
-
-    )
+    ScreenChat()
 }
 
 @Composable
