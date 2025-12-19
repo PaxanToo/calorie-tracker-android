@@ -20,7 +20,7 @@ import androidx.compose.runtime.setValue
 fun getBotResponse(message: String): String {
     return when {
         message.contains("привет", ignoreCase = true) ->
-            "Привет! Рад тебя видеть 😊"
+            "Привет! Рад тебя видеть "
 
         message.contains("помощь", ignoreCase = true) ->
             "Я могу помочь с подсчётом калорий и мотивацией "
