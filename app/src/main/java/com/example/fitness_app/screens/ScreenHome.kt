@@ -4,6 +4,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,13 +35,35 @@ import androidx.compose.material3.Icon
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import kotlin.math.roundToInt
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 
 
+data class CalorieEntry(
+    val calories: Int,
+    val time: String
+)
 
 
 
+private fun encodeEntries(entries: List<CalorieEntry>): String {
+    return entries.joinToString(";") { "${it.calories}|${it.time}" }
+}
 
+private fun decodeEntries(raw: String): List<CalorieEntry> {
+    if (raw.isBlank()) return emptyList()
+
+    return raw.split(";").mapNotNull {
+        val parts = it.split("|")
+        if (parts.size == 2) {
+            CalorieEntry(
+                calories = parts[0].toIntOrNull() ?: return@mapNotNull null,
+                time = parts[1]
+            )
+        } else null
+    }
+}
 
 
 
@@ -53,12 +77,11 @@ fun CircularProgressBar(
     strokeWidth: Dp = 8.dp,
     animDuration: Int = 1000
 ) {
-
     var animationPlayed by remember { mutableStateOf(false) }
 
     val curPercentage by animateFloatAsState(
         targetValue = if (animationPlayed) percentage else 0f,
-        animationSpec = tween(durationMillis = animDuration),
+        animationSpec = tween(animDuration),
         label = "progress_animation"
     )
 
@@ -86,23 +109,27 @@ fun CircularProgressBar(
         Text(
             text = (curPercentage * number).toInt().toString(),
             fontSize = fontSize,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black
+            fontWeight = FontWeight.Bold
         )
     }
 }
+
+
 
 @Composable
 fun ScreenHome() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    val timeFormatter = remember {
+        DateTimeFormatter.ofPattern("HH:mm")
+    }
 
     var goal by remember { mutableStateOf(2200) }
     var eaten by remember { mutableStateOf(0) }
 
     var showAchievement by remember { mutableStateOf(false) }
-    var achievementShownForCurrentGoal by remember { mutableStateOf(false) }
+    var achievementShown by remember { mutableStateOf(false) }
 
     var showAddDialog by remember { mutableStateOf(false) }
     var showGoalDialog by remember { mutableStateOf(false) }
@@ -114,12 +141,19 @@ fun ScreenHome() {
         label = "fab_anim"
     )
 
+    val entries = remember { mutableStateListOf<CalorieEntry>() }
+
 
 
     LaunchedEffect(Unit) {
         val prefs = context.prefsDataStore().data.first()
+
         goal = prefs[PrefsKeys.CAL_GOAL] ?: 2200
         eaten = prefs[PrefsKeys.CAL_EATEN] ?: 0
+
+        val saved = prefs[PrefsKeys.CAL_ENTRIES] ?: ""
+        entries.clear()
+        entries.addAll(decodeEntries(saved))
     }
 
 
@@ -128,114 +162,146 @@ fun ScreenHome() {
 
 
     LaunchedEffect(eaten, goal) {
-        if (eaten >= goal && !achievementShownForCurrentGoal) {
+        if (eaten >= goal && !achievementShown) {
             showAchievement = true
-            achievementShownForCurrentGoal = true
+            achievementShown = true
 
             delay(2000)
             showAchievement = false
 
-            scope.launch {
-                context.prefsDataStore().edit {
-                    it[PrefsKeys.ACH_GOAL_REACHED] = true
-                }
+            context.prefsDataStore().edit {
+                it[PrefsKeys.ACH_GOAL_REACHED] = true
             }
         }
     }
 
 
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
 
-        Box(contentAlignment = Alignment.Center) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
 
-            CircularProgressBar(
-                percentage = progress,
-                number = goal,
-                color = Color(0xFF4CAF50)
-            )
-
-            Text(
-                text = "$eaten / $goal ккал",
-                modifier = Modifier.offset(y = 90.dp),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium
-            )
+            Spacer(modifier = Modifier.height(48.dp))
 
 
-            FloatingActionButton(
-                onClick = { isFabOpen = !isFabOpen },
-                modifier = Modifier
-                    .offset {
-                        IntOffset(
-                            (90.dp.toPx()).roundToInt(),
-                            (-40.dp.toPx()).roundToInt()
-                        )
-                    }
-                    .rotate(225f * fabProgress)
-                    .scale(1f + 0.15f * fabProgress)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null
+            Box(contentAlignment = Alignment.Center) {
+
+                CircularProgressBar(
+                    percentage = progress,
+                    number = goal,
+                    color = Color(0xFF4CAF50)
                 )
-            }
+
+                Text(
+                    text = "$eaten / $goal ккал",
+                    modifier = Modifier.offset(y = 90.dp),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
 
 
-            if (fabProgress > 0f) {
                 FloatingActionButton(
-                    onClick = {
-                        isFabOpen = false
-                        showAddDialog = true
-                    },
+                    onClick = { isFabOpen = !isFabOpen },
                     modifier = Modifier
-                        .offset((-70).dp * fabProgress, (-10).dp * fabProgress)
-                        .scale(0.7f + 0.3f * fabProgress)
-                        .alpha(fabProgress)
+                        .offset {
+                            IntOffset(
+                                (90.dp.toPx()).roundToInt(),
+                                (-40.dp.toPx()).roundToInt()
+                            )
+                        }
+                        .rotate(225f * fabProgress)
+                        .scale(1f + 0.15f * fabProgress)
                 ) {
-                    Text("+")
+                    Icon(Icons.Default.Add, null)
+                }
+
+
+                if (fabProgress > 0f) {
+                    FloatingActionButton(
+                        onClick = {
+                            isFabOpen = false
+                            showAddDialog = true
+                        },
+                        modifier = Modifier
+                            .offset((-70).dp * fabProgress, (-10).dp * fabProgress)
+                            .scale(0.7f + 0.3f * fabProgress)
+                            .alpha(fabProgress)
+                    ) { Text("+") }
+                }
+
+                if (fabProgress > 0f) {
+                    FloatingActionButton(
+                        onClick = {
+                            isFabOpen = false
+                            showGoalDialog = true
+                        },
+                        modifier = Modifier
+                            .offset(0.dp, (-80).dp * fabProgress)
+                            .scale(0.7f + 0.3f * fabProgress)
+                            .alpha(fabProgress)
+                    ) { Text("🎯") }
+                }
+
+                if (fabProgress > 0f) {
+                    FloatingActionButton(
+                        onClick = {
+                            isFabOpen = false
+                            eaten = 0
+                            achievementShown = false
+                            entries.clear()
+
+                            scope.launch {
+                                context.prefsDataStore().edit {
+                                    it[PrefsKeys.CAL_EATEN] = 0
+                                    it[PrefsKeys.ACH_GOAL_REACHED] = false
+                                    it[PrefsKeys.CAL_ENTRIES] = ""
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .offset(70.dp * fabProgress, (-10).dp * fabProgress)
+                            .scale(0.7f + 0.3f * fabProgress)
+                            .alpha(fabProgress),
+                        containerColor = Color.Red
+                    ) { Text("⟳") }
                 }
             }
 
-            if (fabProgress > 0f) {
-                FloatingActionButton(
-                    onClick = {
-                        isFabOpen = false
-                        showGoalDialog = true
-                    },
-                    modifier = Modifier
-                        .offset(0.dp, (-80).dp * fabProgress)
-                        .scale(0.7f + 0.3f * fabProgress)
-                        .alpha(fabProgress)
-                ) {
-                    Text("🎯")
-                }
-            }
 
-            if (fabProgress > 0f) {
-                FloatingActionButton(
-                    onClick = {
-                        isFabOpen = false
-                        eaten = 0
-                        achievementShownForCurrentGoal = false
+            Spacer(modifier = Modifier.height(52.dp))
 
-                        scope.launch {
-                            context.prefsDataStore().edit {
-                                it[PrefsKeys.CAL_EATEN] = 0
-                                it[PrefsKeys.ACH_GOAL_REACHED] = false
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+
+                    Text("Добавленные калории", fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (entries.isEmpty()) {
+                        Text("Пока нет записей", color = Color.Gray)
+                    } else {
+                        LazyColumn {
+                            items(entries) { entry ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("+${entry.calories} ккал")
+                                    Text(entry.time, fontSize = 12.sp, color = Color.Gray)
+                                }
                             }
                         }
-                    },
-                    modifier = Modifier
-                        .offset(70.dp * fabProgress, (-10).dp * fabProgress)
-                        .scale(0.7f + 0.3f * fabProgress)
-                        .alpha(fabProgress),
-                    containerColor = Color.Red
-                ) {
-                    Text("⟳")
+                    }
                 }
             }
         }
@@ -248,9 +314,19 @@ fun ScreenHome() {
                 onDismiss = { showAddDialog = false },
                 onConfirm = {
                     eaten += it
+
+                    entries.add(
+                        0,
+                        CalorieEntry(
+                            it,
+                            LocalTime.now().format(timeFormatter)
+                        )
+                    )
+
                     scope.launch {
                         context.prefsDataStore().edit { prefs ->
                             prefs[PrefsKeys.CAL_EATEN] = eaten
+                            prefs[PrefsKeys.CAL_ENTRIES] = encodeEntries(entries)
                         }
                     }
                 }
@@ -263,10 +339,11 @@ fun ScreenHome() {
                 onDismiss = { showGoalDialog = false },
                 onConfirm = {
                     goal = it
-                    achievementShownForCurrentGoal = false
+                    achievementShown = false
+
                     scope.launch {
-                        context.prefsDataStore().edit { prefs ->
-                            prefs[PrefsKeys.CAL_GOAL] = goal
+                        context.prefsDataStore().edit {
+                            it[PrefsKeys.CAL_GOAL] = goal
                         }
                     }
                 }
@@ -281,7 +358,7 @@ fun ScreenHome() {
             )
 
             LottieAnimation(
-                composition = composition,
+                composition,
                 iterations = 1,
                 modifier = Modifier.size(250.dp)
             )
@@ -317,14 +394,10 @@ fun SimpleInputDialog(
                     onConfirm(it)
                     onDismiss()
                 }
-            }) {
-                Text("OK")
-            }
+            }) { Text("OK") }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Отмена")
-            }
+            TextButton(onClick = onDismiss) { Text("Отмена") }
         }
     )
 }
