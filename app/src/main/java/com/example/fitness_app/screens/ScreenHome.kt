@@ -380,24 +380,82 @@ fun SimpleInputDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            OutlinedTextField(
-                value = value,
-                onValueChange = { value = it },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number
+
+            Column {
+
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = { value = it },
+                    label = { Text("Калории") },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 )
-            )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Быстро добавить:",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Button(
+                        onClick = {
+                            onConfirm(50)
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("+50")
+                    }
+
+                    Button(
+                        onClick = {
+                            onConfirm(200)
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("+200")
+                    }
+
+                    Button(
+                        onClick = {
+                            onConfirm(550)
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("+550")
+                    }
+                }
+            }
         },
         confirmButton = {
-            TextButton(onClick = {
-                value.toIntOrNull()?.let {
-                    onConfirm(it)
-                    onDismiss()
+            TextButton(
+                onClick = {
+                    value.toIntOrNull()?.let {
+                        onConfirm(it)
+                        onDismiss()
+                    }
                 }
-            }) { Text("OK") }
+            ) {
+                Text("Добавить")
+            }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена") }
+            TextButton(onClick = onDismiss) {
+                Text("Отмена")
+            }
         }
     )
 }

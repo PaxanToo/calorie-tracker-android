@@ -1,264 +1,201 @@
 package com.example.fitness_app.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fitness_app.ItemDb
-import com.example.fitness_app.MainViewModel
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.offset
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.alpha
 
 
 
-@Preview(showBackground = true)
-@Composable
-fun Screen2Preview() {
-    Screen222()
+enum class Gender { Мужской, Женский }
+
+enum class AgeGroup(val label: String) {
+    A9_20("9–20 лет"),
+    A21_35("21–35 лет"),
+    A36_50("36–50 лет"),
+    A51_PLUS("51+ лет")
 }
 
+enum class HeightGroup(val label: String) {
+    H150_160("150–160 см"),
+    H161_170("161–170 см"),
+    H171_180("171–180 см"),
+    H181_190("181–190 см"),
+    H191_PLUS("191+ см")
+}
+
+enum class WeightGroup(val label: String) {
+    W40_55("40–55 кг"),
+    W56_70("56–70 кг"),
+    W71_85("71–85 кг"),
+    W86_100("86–100 кг"),
+    W101_PLUS("101+ кг")
+}
+
+enum class ActivityLevel(val label: String, val factor: Float) {
+    LOW("Минимальная активность", 1.2f),
+    LIGHT("Лёгкая активность", 1.375f),
+    MEDIUM("Средняя активность", 1.55f),
+    HIGH("Высокая активность", 1.725f),
+    VERY_HIGH("Очень высокая", 1.9f)
+}
+
+enum class Goal(val label: String) {
+    LOSE("Похудение"),
+    MAINTAIN("Поддержание веса"),
+    GAIN("Набор массы")
+}
+
+
+
 @Composable
-fun Screen222(
-    viewModel: MainViewModel = viewModel()
-) {
+fun ScreenProfileSetup() {
 
+    var step by remember { mutableStateOf(0) }
 
-    val height = remember { mutableStateOf("") }
-    val weight = remember { mutableStateOf("") }
-    val result = remember { mutableStateOf("") }
+    var gender by remember { mutableStateOf<Gender?>(null) }
+    var age by remember { mutableStateOf<AgeGroup?>(null) }
+    var height by remember { mutableStateOf<HeightGroup?>(null) }
+    var weight by remember { mutableStateOf<WeightGroup?>(null) }
+    var activity by remember { mutableStateOf<ActivityLevel?>(null) }
+    var goal by remember { mutableStateOf<Goal?>(null) }
 
+    val canGoNext = when (step) {
+        0 -> gender != null
+        1 -> age != null
+        2 -> height != null
+        3 -> weight != null
+        4 -> activity != null
+        5 -> goal != null
+        else -> true
+    }
 
-    val items = viewModel.items.collectAsState().value
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+            .padding(bottom = 80.dp),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
 
+        when (step) {
 
-    val isMenuExtend = remember { mutableStateOf(false) }
-    val animationProgress by animateFloatAsState(
-        targetValue = if (isMenuExtend.value) 1f else 0f,
-        animationSpec = tween(durationMillis = 400),
-        label = "fab_progr"
-
-    )
-
-
-
-    Box(modifier = Modifier.fillMaxSize()) {
-
-
-        FloatingActionButton(
-            onClick = {
-                isMenuExtend.value = !isMenuExtend.value
-            },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 150.dp)
-                .rotate(225f * animationProgress)
-                .scale(1f + 0.15f * animationProgress)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Toggle menu"
+            0 -> SelectionStep(
+                title = "Ваш пол",
+                options = Gender.values().toList(),
+                label = { it.name.lowercase().replaceFirstChar { c -> c.uppercase() } },
+                selected = gender,
+                onSelect = { gender = it }
             )
-        }
 
-
-        if (animationProgress > 0f) {
-            FloatingActionButton(
-                onClick = {
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 150.dp)
-                    .offset(x = (-80).dp * animationProgress)
-                    .scale(0.6f + 0.4f * animationProgress)
-                    .alpha(animationProgress)
-            ) {
-                Text("1")
-            }
-        }
-
-
-
-        if (animationProgress > 0f) {
-            FloatingActionButton(
-                onClick = {
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 150.dp)
-                    .offset(
-                        y = (-90).dp * animationProgress
-                    )
-                    .scale(0.6f + 0.4f * animationProgress)
-                    .alpha(animationProgress)
-            ) {
-                Text("2")
-            }
-        }
-
-
-        if (animationProgress > 0f) {
-            FloatingActionButton(
-                onClick = {
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 150.dp)
-                    .offset(x = (80).dp * animationProgress)
-                    .scale(0.6f + 0.4f * animationProgress)
-                    .alpha(animationProgress)
-            ) {
-                Text("3")
-            }
-        }
-
-
-
-
-
-
-
-
-
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .align(Alignment.Center),
-            verticalArrangement = Arrangement.Center
-        ) {
-
-            /*
-        Box(
-
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .padding(15.dp)
-                .fillMaxWidth()
-
-        )
-        {
-            Button(onClick = {
-
-
-
-
-
-
-
-
-            }) { }
-
-         */
-
-
-
-
-
-
-
-            Text("Введите данные", fontSize = 20.sp)
-            Spacer(modifier = Modifier.height(16.dp))
-
-
-            Text(text = result.value, fontSize = 16.sp)
-            Spacer(modifier = Modifier.height(16.dp))
-
-
-
-            OutlinedTextField(
-                value = height.value,
-                onValueChange = { height.value = it },
-                label = { Text("Рост (см)") }
+            1 -> SelectionStep(
+                title = "Возраст",
+                options = AgeGroup.values().toList(),
+                label = { it.label },
+                selected = age,
+                onSelect = { age = it }
             )
-            Spacer(modifier = Modifier.height(8.dp))
 
-
-
-            OutlinedTextField(
-                value = weight.value,
-                onValueChange = { weight.value = it },
-                label = { Text("Вес (кг)") }
+            2 -> SelectionStep(
+                title = "Рост",
+                options = HeightGroup.values().toList(),
+                label = { it.label },
+                selected = height,
+                onSelect = { height = it }
             )
-            Spacer(modifier = Modifier.height(16.dp))
 
+            3 -> SelectionStep(
+                title = "Вес",
+                options = WeightGroup.values().toList(),
+                label = { it.label },
+                selected = weight,
+                onSelect = { weight = it }
+            )
 
+            4 -> SelectionStep(
+                title = "Уровень активности",
+                options = ActivityLevel.values().toList(),
+                label = { it.label },
+                selected = activity,
+                onSelect = { activity = it }
+            )
 
-            Button(onClick = {
-                val heightCm = height.value.toIntOrNull()
-                val weightKg = weight.value.toIntOrNull()
+            5 -> SelectionStep(
+                title = "Цель",
+                options = Goal.values().toList(),
+                label = { it.label },
+                selected = goal,
+                onSelect = { goal = it }
+            )
 
-                if (heightCm != null && weightKg != null && heightCm > 0) {
-                    val heightM = heightCm / 100f
-                    val bmi = weightKg / (heightM * heightM)
-
-
-                    viewModel.insertItem(
-                        ItemDb(
-                            name = "Запись",
-                            weight = weightKg,
-                            height = heightCm.toString()
-                        )
-                    )
-
-
-                    result.value = "ИМТ: ${"%.2f".format(bmi)}"
-                } else {
-                    result.value = "Введите корректные данные"
+            6 -> {
+                Column {
+                    Text("Готово 🎉", fontSize = 22.sp)
+                    Spacer(Modifier.height(16.dp))
+                    Text("Пол: ${gender?.name}")
+                    Text("Возраст: ${age?.label}")
+                    Text("Рост: ${height?.label}")
+                    Text("Вес: ${weight?.label}")
+                    Text("Активность: ${activity?.label}")
+                    Text("Цель: ${goal?.label}")
                 }
-
-
-            }) {
-                Text("Сохранить")
             }
-            Spacer(modifier = Modifier.height(24.dp))
-
-
-            Text("Сохранённые записи:")
-
-
-            items.forEach {
-                Text("Рост: ${it.height} Вес: ${it.weight}")
-            }
-
-
         }
 
-
+        Button(
+            onClick = { step++ },
+            enabled = canGoNext,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(if (step < 6) "Далее" else "Сохранить")
+        }
     }
 }
 
 
 
+@Composable
+fun <T> SelectionStep(
+    title: String,
+    options: List<T>,
+    label: (T) -> String,
+    selected: T?,
+    onSelect: (T) -> Unit
+) {
+    Column {
+        Text(title, fontSize = 22.sp)
+        Spacer(Modifier.height(16.dp))
+
+        options.forEach { item ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = selected == item,
+                    onClick = { onSelect(item) }
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(label(item))
+            }
+        }
+    }
+}
 
 
 
-
-
+@Preview(showBackground = true)
+@Composable
+fun ScreenProfileSetupPreview() {
+    ScreenProfileSetup()
+}
+@Composable
+fun Screen222() {
+    ScreenProfileSetup()
+}
