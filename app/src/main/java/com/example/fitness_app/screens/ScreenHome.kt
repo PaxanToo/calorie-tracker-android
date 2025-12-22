@@ -8,27 +8,31 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.*
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.*
 import com.example.fitness_app.R
 import kotlinx.coroutines.delay
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import com.example.fitness_app.DATA.PrefsKeys
 import com.example.fitness_app.DATA.prefsDataStore
-
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import kotlin.math.roundToInt
 
 
 
@@ -49,6 +53,7 @@ fun CircularProgressBar(
     strokeWidth: Dp = 8.dp,
     animDuration: Int = 1000
 ) {
+
     var animationPlayed by remember { mutableStateOf(false) }
 
     val curPercentage by animateFloatAsState(
@@ -96,13 +101,18 @@ fun ScreenHome() {
     var goal by remember { mutableStateOf(2200) }
     var eaten by remember { mutableStateOf(0) }
 
-    var goalInput by remember { mutableStateOf("") }
-    var eatenInput by remember { mutableStateOf("") }
-
     var showAchievement by remember { mutableStateOf(false) }
     var achievementShownForCurrentGoal by remember { mutableStateOf(false) }
 
+    var showAddDialog by remember { mutableStateOf(false) }
+    var showGoalDialog by remember { mutableStateOf(false) }
 
+    var isFabOpen by remember { mutableStateOf(false) }
+    val fabProgress by animateFloatAsState(
+        targetValue = if (isFabOpen) 1f else 0f,
+        animationSpec = tween(400),
+        label = "fab_anim"
+    )
 
 
 
@@ -113,7 +123,8 @@ fun ScreenHome() {
     }
 
 
-    val progress = if (goal > 0) (eaten.toFloat() / goal).coerceIn(0f, 1f) else 0f
+    val progress =
+        if (goal > 0) (eaten.toFloat() / goal).coerceIn(0f, 1f) else 0f
 
 
     LaunchedEffect(eaten, goal) {
@@ -124,144 +135,144 @@ fun ScreenHome() {
             delay(2000)
             showAchievement = false
 
-
             scope.launch {
-                context.prefsDataStore().edit{
-                    prefs -> prefs[PrefsKeys.ACH_GOAL_REACHED] = true
+                context.prefsDataStore().edit {
+                    it[PrefsKeys.ACH_GOAL_REACHED] = true
                 }
             }
         }
-
-
-
-
     }
 
 
-    Box(modifier = Modifier.fillMaxSize()){
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
 
-        ) {
-            Spacer(modifier = Modifier.height(20.dp))
+        Box(contentAlignment = Alignment.Center) {
 
             CircularProgressBar(
                 percentage = progress,
                 number = goal,
                 color = Color(0xFF4CAF50)
-
-
             )
-            Spacer(modifier = Modifier.height(8.dp))
-
-
 
             Text(
                 text = "$eaten / $goal ккал",
+                modifier = Modifier.offset(y = 90.dp),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium
             )
-            Spacer(modifier = Modifier.height(24.dp))
 
 
-
-
-            OutlinedTextField(
-                value = goalInput,
-                onValueChange = { goalInput = it },
-                label = { Text("Цель (до 5000 ккал)") },
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default.copy(
-                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                ),
-                modifier = Modifier.fillMaxWidth(0.8f)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-
-
-            Button(
-                onClick = {
-                    val value = goalInput.toIntOrNull()
-                    if (value != null && value in 1..5000) {
-                        goal = value
-                        goalInput = ""
-                        scope.launch {
-                            context.prefsDataStore().edit { preferences ->
-                                preferences[PrefsKeys.CAL_GOAL] = goal
-                            }
-                        }
+            FloatingActionButton(
+                onClick = { isFabOpen = !isFabOpen },
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            (90.dp.toPx()).roundToInt(),
+                            (-40.dp.toPx()).roundToInt()
+                        )
                     }
-                },
-                modifier = Modifier.fillMaxWidth(0.8f)
+                    .rotate(225f * fabProgress)
+                    .scale(1f + 0.15f * fabProgress)
             ) {
-                Text("Сохранить цель")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null
+                )
             }
-            Spacer(modifier = Modifier.height(24.dp))
 
 
-
-            OutlinedTextField(
-                value = eatenInput,
-                onValueChange = { eatenInput = it },
-                label = { Text("Съедено калорий") },
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default.copy(
-                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                ),
-                modifier = Modifier.fillMaxWidth(0.8f)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth(0.8f)
-            ) {
-                Button(
+            if (fabProgress > 0f) {
+                FloatingActionButton(
                     onClick = {
-                        val value = eatenInput.toIntOrNull()
-                        if (value != null && value > 0) {
-                            eaten += value
-                            eatenInput = ""
-                            scope.launch {
-                                context.prefsDataStore().edit { preferences ->
-                                    preferences[PrefsKeys.CAL_EATEN] = eaten
-                                }
-                            }
-                        }
+                        isFabOpen = false
+                        showAddDialog = true
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .offset((-70).dp * fabProgress, (-10).dp * fabProgress)
+                        .scale(0.7f + 0.3f * fabProgress)
+                        .alpha(fabProgress)
                 ) {
-                    Text("Добавить")
+                    Text("+")
                 }
+            }
 
-                Button(
+            if (fabProgress > 0f) {
+                FloatingActionButton(
                     onClick = {
+                        isFabOpen = false
+                        showGoalDialog = true
+                    },
+                    modifier = Modifier
+                        .offset(0.dp, (-80).dp * fabProgress)
+                        .scale(0.7f + 0.3f * fabProgress)
+                        .alpha(fabProgress)
+                ) {
+                    Text("🎯")
+                }
+            }
 
-                        achievementShownForCurrentGoal = false
+            if (fabProgress > 0f) {
+                FloatingActionButton(
+                    onClick = {
+                        isFabOpen = false
                         eaten = 0
+                        achievementShownForCurrentGoal = false
 
                         scope.launch {
-                            context.prefsDataStore().edit { prefs ->
-                                prefs[PrefsKeys.CAL_EATEN] = 0
-                                prefs[PrefsKeys.ACH_GOAL_REACHED] = false
+                            context.prefsDataStore().edit {
+                                it[PrefsKeys.CAL_EATEN] = 0
+                                it[PrefsKeys.ACH_GOAL_REACHED] = false
                             }
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Red,
-                        contentColor = Color.White
-                    ),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .offset(70.dp * fabProgress, (-10).dp * fabProgress)
+                        .scale(0.7f + 0.3f * fabProgress)
+                        .alpha(fabProgress),
+                    containerColor = Color.Red
                 ) {
-                    Text("Сбросить")
+                    Text("⟳")
                 }
             }
         }
+
+
+
+        if (showAddDialog) {
+            SimpleInputDialog(
+                title = "Добавить калории",
+                onDismiss = { showAddDialog = false },
+                onConfirm = {
+                    eaten += it
+                    scope.launch {
+                        context.prefsDataStore().edit { prefs ->
+                            prefs[PrefsKeys.CAL_EATEN] = eaten
+                        }
+                    }
+                }
+            )
+        }
+
+        if (showGoalDialog) {
+            SimpleInputDialog(
+                title = "Новая цель",
+                onDismiss = { showGoalDialog = false },
+                onConfirm = {
+                    goal = it
+                    achievementShownForCurrentGoal = false
+                    scope.launch {
+                        context.prefsDataStore().edit { prefs ->
+                            prefs[PrefsKeys.CAL_GOAL] = goal
+                        }
+                    }
+                }
+            )
+        }
+
 
 
         if (showAchievement) {
@@ -272,18 +283,53 @@ fun ScreenHome() {
             LottieAnimation(
                 composition = composition,
                 iterations = 1,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(250.dp)
+                modifier = Modifier.size(250.dp)
             )
         }
-
-
-
-
     }
-
 }
+
+
+
+@Composable
+fun SimpleInputDialog(
+    title: String,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit
+) {
+    var value by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            OutlinedTextField(
+                value = value,
+                onValueChange = { value = it },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                value.toIntOrNull()?.let {
+                    onConfirm(it)
+                    onDismiss()
+                }
+            }) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Отмена")
+            }
+        }
+    )
+}
+
+
 
 @Preview(showBackground = true)
 @Composable
