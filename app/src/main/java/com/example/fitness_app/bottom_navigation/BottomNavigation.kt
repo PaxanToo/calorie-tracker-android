@@ -1,75 +1,210 @@
 package com.example.fitness_app.bottom_navigation
 
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import com.example.fitness_app.R
 
+private fun easingTransform(
+    from: Float,
+    to: Float,
+    value: Float
+): Float {
+    return FastOutSlowInEasing.transform(
+        ((value - from) / (to - from)).coerceIn(0f, 1f)
+    )
+}
 
+private operator fun PaddingValues.times(value: Float): PaddingValues =
+    PaddingValues(
+        top = calculateTopPadding() * value,
+        bottom = calculateBottomPadding() * value,
+        start = calculateStartPadding(LayoutDirection.Ltr) * value,
+        end = calculateEndPadding(LayoutDirection.Ltr) * value
+    )
 
 @Composable
 fun BottomNavigationBar(
     navController: NavController
 ) {
-    val items = listOf(
-        Home,
-        Page2,
-        Page3,
-        Page4
-    )
+    val items = listOf(Home, Page3)
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    NavigationBar {
-        items.forEach { item ->
+    var expanded by remember { mutableStateOf(false) }
 
-            val isSelected = currentRoute == item.route
+    val animationProgress by animateFloatAsState(
+        targetValue = if (expanded) 1f else 0f,
+        animationSpec = tween(900, easing = FastOutSlowInEasing),
+        label = "fabProgress"
+    )
 
-            val iconSize by animateDpAsState(
-                targetValue = if (isSelected) 30.dp else 22.dp,
-                label = "iconSize"
-            )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(WindowInsets.navigationBars.asPaddingValues()),
+        contentAlignment = Alignment.BottomCenter
+    ) {
 
-            val iconColor by animateColorAsState(
-                targetValue = if (isSelected) Color(0xFF4CAF50) else Color.Gray,
-                label = "iconColor"
-            )
+        FabGroup(
+            navController = navController,
+            animationProgress = animationProgress,
+            toggle = { expanded = !expanded }
+        )
 
-
-
-            NavigationBarItem(
-                selected = isSelected,
-                onClick = {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(70.dp)
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 40.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items.forEach { item ->
+                val selected = currentRoute == item.route
+                BottomNavItem(
+                    iconRes = R.drawable.icon1,
+                    selected = selected
+                ) {
                     navController.navigate(item.route) {
                         popUpTo(Home.route)
                         launchSingleTop = true
                     }
-                },
-                icon = {
-                    Icon(
-                        painter = painterResource(id = item.iconId),
-                        contentDescription = item.title,
-                        modifier = Modifier.size(iconSize),
-                        tint = iconColor
-                    )
-                },
-                label = {
-                    Text(text = item.title, fontSize = 10.sp, color = iconColor)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FabGroup(
+    navController: NavController,
+    animationProgress: Float,
+    toggle: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 24.dp),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+
+        AnimatedFab(
+            iconRes = R.drawable.icon1,
+            modifier = Modifier.padding(
+                PaddingValues(
+                    bottom = 72.dp,
+                    start = 180.dp
+                ) * easingTransform(0f, 0.7f, animationProgress)
+            ),
+            opacity = animationProgress,
+            onClick = {
+                navController.navigate(Page2.route)
+                toggle()
+            }
+        )
+
+        AnimatedFab(
+            iconRes = R.drawable.icon1,
+            modifier = Modifier.padding(
+                PaddingValues(
+                    bottom = 72.dp,
+                    end = 180.dp
+                ) * easingTransform(0.2f, 1f, animationProgress)
+            ),
+            opacity = animationProgress,
+            onClick = {
+                navController.navigate(Page4.route)
+                toggle()
+            }
+        )
+
+        AnimatedFab(
+            iconRes = null,
+            modifier = Modifier.scale(1f - animationProgress * 0.25f)
+        )
+
+        FloatingActionButton(
+            onClick = toggle,
+            shape = CircleShape,
+            containerColor = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .scale(1.25f)
+                .rotate(225 * animationProgress),
+            elevation = FloatingActionButtonDefaults.elevation(0.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                tint = Color.White
             )
         }
+    }
+}
+
+@Composable
+private fun AnimatedFab(
+    iconRes: Int?,
+    modifier: Modifier,
+    opacity: Float = 1f,
+    onClick: () -> Unit = {}
+) {
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = modifier.scale(1.25f),
+        shape = CircleShape,
+        containerColor = MaterialTheme.colorScheme.secondary,
+        elevation = FloatingActionButtonDefaults.elevation(0.dp)
+    ) {
+        iconRes?.let {
+            Icon(
+                painter = painterResource(it),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = opacity)
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomNavItem(
+    iconRes: Int,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.2f else 1f,
+        animationSpec = tween(300),
+        label = "navScale"
+    )
+
+    IconButton(onClick = onClick) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            modifier = Modifier.scale(scale),
+            tint = if (selected)
+                MaterialTheme.colorScheme.primary
+            else
+                Color.Gray
+        )
     }
 }
