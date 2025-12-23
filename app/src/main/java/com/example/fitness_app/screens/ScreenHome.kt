@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import kotlin.math.roundToInt
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import com.example.fitness_app.nutrition.NutritionCalculator
 
 
 
@@ -64,6 +65,8 @@ private fun decodeEntries(raw: String): List<CalorieEntry> {
         } else null
     }
 }
+
+
 
 
 
@@ -120,6 +123,28 @@ fun CircularProgressBar(
 fun ScreenHome() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+
+    val gender = Gender.Мужской
+    val age = AgeGroup.A21_35
+    val heightGroup = HeightGroup.H171_180
+    val weightGroup = WeightGroup.W71_85
+    val activity = ActivityLevel.MEDIUM
+    val goalType = Goal.MAINTAIN
+
+    val nutrition = remember {
+        NutritionCalculator.calculate(
+            gender = gender,
+            age = age,
+            height = heightGroup,
+            weight = weightGroup,
+            activity = activity,
+            goal = goalType
+        )
+    }
+
+
+
 
     val timeFormatter = remember {
         DateTimeFormatter.ofPattern("HH:mm")
@@ -304,6 +329,28 @@ fun ScreenHome() {
                     }
                 }
             }
+
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Ваша дневная норма",
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("Калории: ${nutrition.calories} ккал")
+                    Text("Белки: ${nutrition.proteins} г")
+                    Text("Жиры: ${nutrition.fats} г")
+                    Text("Углеводы: ${nutrition.carbs} г")
+                }
+            }
+
+
         }
 
 
