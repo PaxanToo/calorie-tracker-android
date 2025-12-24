@@ -80,8 +80,9 @@ fun BottomNavigationBar(
         ) {
             items.forEach { item ->
                 val selected = currentRoute == item.route
+
                 BottomNavItem(
-                    iconRes = R.drawable.icon1,
+                    iconRes = item.iconId,
                     selected = selected
                 ) {
                     navController.navigate(item.route) {
@@ -108,7 +109,7 @@ private fun FabGroup(
     ) {
 
         AnimatedFab(
-            iconRes = R.drawable.icon1,
+            iconRes = R.drawable.profil,
             modifier = Modifier.padding(
                 PaddingValues(
                     bottom = 72.dp,
@@ -123,7 +124,7 @@ private fun FabGroup(
         )
 
         AnimatedFab(
-            iconRes = R.drawable.icon1,
+            iconRes = R.drawable.achiv,
             modifier = Modifier.padding(
                 PaddingValues(
                     bottom = 72.dp,
