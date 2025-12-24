@@ -150,6 +150,7 @@ fun ScreenProfileSetup() {
             onClick = { step++ },
             enabled = canGoNext,
             modifier = Modifier.fillMaxWidth()
+                .padding(bottom = 60.dp)
         ) {
             Text(if (step < 6) "Далее" else "Сохранить")
         }
