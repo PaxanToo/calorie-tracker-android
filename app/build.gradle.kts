@@ -38,6 +38,11 @@ android {
     buildFeatures {
         compose = true
     }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.8"
+    }
+
 }
 
 dependencies {
@@ -57,6 +62,15 @@ dependencies {
 
 
     implementation("com.airbnb.android:lottie-compose:6.0.0")
+
+
+    implementation ("androidx.core:core-splashscreen:1.0.1")
+
+
+    implementation("com.google.android.material:material:1.11.0")
+
+
+    implementation(libs.androidx.material3)
 
 
     implementation(libs.androidx.core.ktx)
