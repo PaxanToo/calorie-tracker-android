@@ -28,3 +28,9 @@ data object Page4 : BottomItem {
     override val iconId = R.drawable.achiv
     override val route = "page4"
 }
+
+data object Page5 : BottomItem {
+    override val title = "Страница 5"
+    override val iconId = R.drawable.xleb
+    override val route = "page5"
+}

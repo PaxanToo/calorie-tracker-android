@@ -26,5 +26,8 @@ fun NavGraph(
         composable(Page4.route) {
             Screen4()
         }
+        composable(Page5.route) {
+            Screen5()
+        }
     }
 }

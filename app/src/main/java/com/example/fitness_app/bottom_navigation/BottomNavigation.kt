@@ -139,6 +139,24 @@ private fun FabGroup(
         )
 
         AnimatedFab(
+            iconRes = R.drawable.xleb,
+            modifier = Modifier.padding(
+                PaddingValues(
+                    bottom = 92.dp,
+                ) * easingTransform(0f, 0.7f, animationProgress)
+            ),
+            opacity = animationProgress,
+            onClick = {
+                navController.navigate(Page5.route)
+                toggle()
+            }
+        )
+
+
+
+
+
+        AnimatedFab(
             iconRes = null,
             modifier = Modifier.scale(1f - animationProgress * 0.25f)
         )
