@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.LocalIndication
 
 
 @Composable
@@ -70,7 +72,10 @@ fun ScreenFood(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 6.dp)
-                        .clickable {
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = LocalIndication.current
+                        ) {
                             selectedProduct = product
                             showDialog = true
                         }
