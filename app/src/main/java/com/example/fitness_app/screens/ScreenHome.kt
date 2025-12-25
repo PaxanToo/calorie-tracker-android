@@ -3,6 +3,8 @@ package com.example.fitness_app.screens
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,33 +40,17 @@ import kotlin.math.roundToInt
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import com.example.fitness_app.nutrition.NutritionCalculator
+import com.example.fitness_app.DATA.CalorieEntry
+import com.example.fitness_app.DATA.encodeEntries
+import com.example.fitness_app.DATA.decodeEntries
 
 
 
-data class CalorieEntry(
-    val calories: Int,
-    val time: String
-)
 
 
 
-private fun encodeEntries(entries: List<CalorieEntry>): String {
-    return entries.joinToString(";") { "${it.calories}|${it.time}" }
-}
 
-private fun decodeEntries(raw: String): List<CalorieEntry> {
-    if (raw.isBlank()) return emptyList()
 
-    return raw.split(";").mapNotNull {
-        val parts = it.split("|")
-        if (parts.size == 2) {
-            CalorieEntry(
-                calories = parts[0].toIntOrNull() ?: return@mapNotNull null,
-                time = parts[1]
-            )
-        } else null
-    }
-}
 
 
 
@@ -232,6 +218,8 @@ fun ScreenHome() {
 
                 FloatingActionButton(
                     onClick = { isFabOpen = !isFabOpen },
+                    interactionSource = remember { MutableInteractionSource() },
+                    elevation = FloatingActionButtonDefaults.elevation(0.dp),
                     modifier = Modifier
                         .offset {
                             IntOffset(
@@ -252,6 +240,8 @@ fun ScreenHome() {
                             isFabOpen = false
                             showAddDialog = true
                         },
+                        interactionSource = remember { MutableInteractionSource() },
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp),
                         modifier = Modifier
                             .offset((-70).dp * fabProgress, (-10).dp * fabProgress)
                             .scale(0.7f + 0.3f * fabProgress)
@@ -265,6 +255,8 @@ fun ScreenHome() {
                             isFabOpen = false
                             showGoalDialog = true
                         },
+                        interactionSource = remember { MutableInteractionSource() },
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp),
                         modifier = Modifier
                             .offset(0.dp, (-80).dp * fabProgress)
                             .scale(0.7f + 0.3f * fabProgress)
@@ -288,6 +280,8 @@ fun ScreenHome() {
                                 }
                             }
                         },
+                        interactionSource = remember { MutableInteractionSource() },
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp),
                         modifier = Modifier
                             .offset(70.dp * fabProgress, (-10).dp * fabProgress)
                             .scale(0.7f + 0.3f * fabProgress)
@@ -318,7 +312,8 @@ fun ScreenHome() {
                         LazyColumn {
                             items(entries) { entry ->
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text("+${entry.calories} ккал")

@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- ОСНОВНАЯ ТЕМА ПРИЛОЖЕНИЯ (XML) -->
+    <!-- Базовая тема приложения (НЕ Material) -->
     <style name="Theme.FitnessApp"
-        parent="Theme.MaterialComponents.DayNight.NoActionBar" />
+        parent="Theme.MaterialComponents.DayNight.NoActionBar">
 
-    <!-- SPLASH SCREEN -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+
+    </style>
+
+    <!-- Splash Screen -->
     <style name="Theme.FitnessApp.Splash"
         parent="Theme.SplashScreen">
 
