@@ -97,7 +97,7 @@ fun ScreenChat() {
             .padding(
                 start = 16.dp,
                 end = 16.dp,
-                top = 16.dp,
+                top = 85.dp,
                 bottom = 180.dp)
     ) {
 
