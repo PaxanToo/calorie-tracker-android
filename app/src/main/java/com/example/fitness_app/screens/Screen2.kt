@@ -77,7 +77,10 @@ fun ScreenProfileSetup() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .padding(start = 24.dp,
+                end = 24.dp,
+                top = 48.dp,
+                bottom = 80.dp)
             .padding(bottom = 80.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -147,9 +150,16 @@ fun ScreenProfileSetup() {
         }
 
         Button(
-            onClick = { step++ },
+            onClick = {
+                if (step < 6) {
+                    step++
+                } else {
+                    //потом тут навигаци и сохранение в будущем
+                }
+            },
             enabled = canGoNext,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(bottom = 60.dp)
         ) {
             Text(if (step < 6) "Далее" else "Сохранить")
