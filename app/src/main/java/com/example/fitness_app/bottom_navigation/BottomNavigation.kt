@@ -21,16 +21,23 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.fitness_app.R
 
+
+// Функция для нелинейного преобразования значения анимации.
+// Используется для более плавного и естественного появления FAB-кнопок.
 private fun easingTransform(
     from: Float,
     to: Float,
     value: Float
 ): Float {
     return FastOutSlowInEasing.transform(
+        // Нормализация значения в диапазон от 0 до 1
         ((value - from) / (to - from)).coerceIn(0f, 1f)
     )
 }
 
+
+// Перегрузка оператора умножения для PaddingValues.
+// Позволяет динамически масштабировать отступы в зависимости от анимации.
 private operator fun PaddingValues.times(value: Float): PaddingValues =
     PaddingValues(
         top = calculateTopPadding() * value,
@@ -39,23 +46,29 @@ private operator fun PaddingValues.times(value: Float): PaddingValues =
         end = calculateEndPadding(LayoutDirection.Ltr) * value
     )
 
+// Основной composable нижней навигации приложения
 @Composable
 fun BottomNavigationBar(
     navController: NavController
 ) {
+    // Отображаемые элементы в навиг. панели
     val items = listOf(Home, Page3)
 
+    // Отслеживание текущего маршрута для подсветки активной иконки
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
+    // Состояние раскрытия FAB-группы
     var expanded by remember { mutableStateOf(false) }
 
+    // Анимационное значение (0..1), управляющее раскрытием FAB-кнопок
     val animationProgress by animateFloatAsState(
         targetValue = if (expanded) 1f else 0f,
         animationSpec = tween(900, easing = FastOutSlowInEasing),
         label = "fabProgress"
     )
 
+    // Контейнер для нижней навигации и FAB-группы
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -63,12 +76,14 @@ fun BottomNavigationBar(
         contentAlignment = Alignment.BottomCenter
     ) {
 
+        // Группа плавающих кнопок (FAB)
         FabGroup(
             navController = navController,
             animationProgress = animationProgress,
             toggle = { expanded = !expanded }
         )
 
+        // Нижняя панель навигации с иконками
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -81,12 +96,15 @@ fun BottomNavigationBar(
             items.forEach { item ->
                 val selected = currentRoute == item.route
 
+                // Отрисовка отдельного элемента навигации
                 BottomNavItem(
                     iconRes = item.iconId,
                     selected = selected
                 ) {
                     navController.navigate(item.route) {
+                        // Возврат к корневому экрану при навигации
                         popUpTo(Home.route)
+                        // Исключаем повторное создание одного и того же экрана
                         launchSingleTop = true
                     }
                 }
@@ -95,6 +113,7 @@ fun BottomNavigationBar(
     }
 }
 
+// Группа анимированных FAB-кнопок, раскрывающихся из центральной кнопки
 @Composable
 private fun FabGroup(
     navController: NavController,
@@ -108,6 +127,7 @@ private fun FabGroup(
         contentAlignment = Alignment.BottomCenter
     ) {
 
+        // FAB для перехода на экран профиля
         AnimatedFab(
             iconRes = R.drawable.profil,
             modifier = Modifier.padding(
@@ -123,6 +143,7 @@ private fun FabGroup(
             }
         )
 
+        // FAB для перехода на экран достижений
         AnimatedFab(
             iconRes = R.drawable.achiv,
             modifier = Modifier.padding(
@@ -138,6 +159,7 @@ private fun FabGroup(
             }
         )
 
+        // FAB для перехода на экран продуктов
         AnimatedFab(
             iconRes = R.drawable.xleb,
             modifier = Modifier.padding(
@@ -152,15 +174,13 @@ private fun FabGroup(
             }
         )
 
-
-
-
-
+        // Пустая FAB используется как визуальная подложка для анимации
         AnimatedFab(
             iconRes = null,
             modifier = Modifier.scale(1f - animationProgress * 0.25f)
         )
 
+        // Центральная FAB-кнопка, управляющая раскрытием группы
         FloatingActionButton(
             onClick = toggle,
             shape = CircleShape,
@@ -179,6 +199,7 @@ private fun FabGroup(
     }
 }
 
+// Универсальный composable для анимированной FAB-кнопки
 @Composable
 private fun AnimatedFab(
     iconRes: Int?,
@@ -203,12 +224,14 @@ private fun AnimatedFab(
     }
 }
 
+// Отдельный элемент нижней навигации
 @Composable
 private fun BottomNavItem(
     iconRes: Int,
     selected: Boolean,
     onClick: () -> Unit
 ) {
+    // Анимация увеличения иконки при выборе
     val scale by animateFloatAsState(
         targetValue = if (selected) 1.2f else 1f,
         animationSpec = tween(300),

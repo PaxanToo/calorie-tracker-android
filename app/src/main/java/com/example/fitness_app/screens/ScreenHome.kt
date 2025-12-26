@@ -48,36 +48,33 @@ import com.example.fitness_app.DATA.decodeEntries
 
 
 
-
-
-
-
-
-
-
-
+// Кастомный круговой ProgressBar для калорий
 @Composable
 fun CircularProgressBar(
-    percentage: Float,
-    number: Int,
+    percentage: Float, // процент выполнения цели (0f..1f)
+    number: Int, // целевое значение калорий
     fontSize: TextUnit = 28.sp,
     radius: Dp = 60.dp,
     color: Color = Color.Green,
     strokeWidth: Dp = 8.dp,
-    animDuration: Int = 1000
+    animDuration: Int = 1000 // длительность анимации
 ) {
+    // Флаг, чтобы анимация запускалась только один раз
     var animationPlayed by remember { mutableStateOf(false) }
 
+    // Анимация заполнения круга
     val curPercentage by animateFloatAsState(
         targetValue = if (animationPlayed) percentage else 0f,
         animationSpec = tween(animDuration),
         label = "progress_animation"
     )
 
+    // Запуск анимации при первом отображении
     LaunchedEffect(Unit) {
         animationPlayed = true
     }
 
+    // Контейнер с Canvas и текстом внутри
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.size(radius * 2)
@@ -95,6 +92,7 @@ fun CircularProgressBar(
             )
         }
 
+        // Текущие калории (прогресс * цель)
         Text(
             text = (curPercentage * number).toInt().toString(),
             fontSize = fontSize,
@@ -104,13 +102,15 @@ fun CircularProgressBar(
 }
 
 
-
+// Главный экран приложения
 @Composable
 fun ScreenHome() {
+    // Контекст и coroutineScope для работы с DataStore
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-
+    // ВРЕМЕННЫЕ значения профиля пользователя (заглушки для MVP)
+    // В будущем будут браться из экрана заполнения профиля
     val gender = Gender.Мужской
     val age = AgeGroup.A21_35
     val heightGroup = HeightGroup.H171_180
@@ -118,6 +118,10 @@ fun ScreenHome() {
     val activity = ActivityLevel.MEDIUM
     val goalType = Goal.MAINTAIN
 
+    // Состояние для подтверждения сброса
+    var showResetDialog by remember { mutableStateOf(false) }
+
+    // Расчёт дневной нормы питания
     val nutrition = remember {
         NutritionCalculator.calculate(
             gender = gender,
@@ -129,33 +133,37 @@ fun ScreenHome() {
         )
     }
 
-
-
-
+    // Формат времени для записей калорий
     val timeFormatter = remember {
         DateTimeFormatter.ofPattern("HH:mm")
     }
 
+    // Состояния цели и съеденных калорий
     var goal by remember { mutableStateOf(2200) }
     var eaten by remember { mutableStateOf(0) }
 
+    // Флаги для анимации достижения цели
     var showAchievement by remember { mutableStateOf(false) }
     var achievementShown by remember { mutableStateOf(false) }
 
+    // Управление диалогами
     var showAddDialog by remember { mutableStateOf(false) }
     var showGoalDialog by remember { mutableStateOf(false) }
 
+    // Состояние раскрытия FAB-меню
     var isFabOpen by remember { mutableStateOf(false) }
+
+    // Анимация FAB
     val fabProgress by animateFloatAsState(
         targetValue = if (isFabOpen) 1f else 0f,
         animationSpec = tween(400),
         label = "fab_anim"
     )
 
+    // Список добавленных калорий
     val entries = remember { mutableStateListOf<CalorieEntry>() }
 
-
-
+    // Загрузка сохранённых данных из DataStore
     LaunchedEffect(Unit) {
         val prefs = context.prefsDataStore().data.first()
 
@@ -167,11 +175,12 @@ fun ScreenHome() {
         entries.addAll(decodeEntries(saved))
     }
 
-
+    // Расчёт процента выполнения цели
     val progress =
         if (goal > 0) (eaten.toFloat() / goal).coerceIn(0f, 1f) else 0f
 
 
+    // Проверка достижения цели
     LaunchedEffect(eaten, goal) {
         if (eaten >= goal && !achievementShown) {
             showAchievement = true
@@ -180,6 +189,7 @@ fun ScreenHome() {
             delay(2000)
             showAchievement = false
 
+            // Сохраняем факт достижения цели
             context.prefsDataStore().edit {
                 it[PrefsKeys.ACH_GOAL_REACHED] = true
             }
@@ -187,7 +197,7 @@ fun ScreenHome() {
     }
 
 
-
+// UI
     Box(modifier = Modifier.fillMaxSize()) {
 
         Column(
@@ -197,9 +207,9 @@ fun ScreenHome() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(80.dp))
 
-
+            // Блок с прогрессбаром и FAB
             Box(contentAlignment = Alignment.Center) {
 
                 CircularProgressBar(
@@ -215,7 +225,7 @@ fun ScreenHome() {
                     fontWeight = FontWeight.Medium
                 )
 
-
+                // Главная FAB-кнопка
                 FloatingActionButton(
                     onClick = { isFabOpen = !isFabOpen },
                     interactionSource = remember { MutableInteractionSource() },
@@ -233,7 +243,7 @@ fun ScreenHome() {
                     Icon(Icons.Default.Add, null)
                 }
 
-
+                // FAB — добавить калории
                 if (fabProgress > 0f) {
                     FloatingActionButton(
                         onClick = {
@@ -249,6 +259,7 @@ fun ScreenHome() {
                     ) { Text("+") }
                 }
 
+                // FAB — изменить цель
                 if (fabProgress > 0f) {
                     FloatingActionButton(
                         onClick = {
@@ -264,21 +275,12 @@ fun ScreenHome() {
                     ) { Text("🎯") }
                 }
 
+                // FAB — сброс данных
                 if (fabProgress > 0f) {
                     FloatingActionButton(
                         onClick = {
                             isFabOpen = false
-                            eaten = 0
-                            achievementShown = false
-                            entries.clear()
-
-                            scope.launch {
-                                context.prefsDataStore().edit {
-                                    it[PrefsKeys.CAL_EATEN] = 0
-                                    it[PrefsKeys.ACH_GOAL_REACHED] = false
-                                    it[PrefsKeys.CAL_ENTRIES] = ""
-                                }
-                            }
+                            showResetDialog = true
                         },
                         interactionSource = remember { MutableInteractionSource() },
                         elevation = FloatingActionButtonDefaults.elevation(0.dp),
@@ -294,7 +296,7 @@ fun ScreenHome() {
 
             Spacer(modifier = Modifier.height(52.dp))
 
-
+            // Список добавленных калорий
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -328,6 +330,7 @@ fun ScreenHome() {
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Блок с дневной нормой (пока заглушка)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(4.dp)
@@ -349,18 +352,19 @@ fun ScreenHome() {
         }
 
 
-
+        // Диалог добавления калорий
         if (showAddDialog) {
             SimpleInputDialog(
                 title = "Добавить калории",
+                quickValues = listOf(50, 200, 550), // ★ ИЗМЕНЕНО
                 onDismiss = { showAddDialog = false },
-                onConfirm = {
-                    eaten += it
+                onConfirm = { value ->
+                    eaten += value
 
                     entries.add(
                         0,
                         CalorieEntry(
-                            it,
+                            value,
                             LocalTime.now().format(timeFormatter)
                         )
                     )
@@ -375,12 +379,14 @@ fun ScreenHome() {
             )
         }
 
+        // Диалог изменения цели
         if (showGoalDialog) {
             SimpleInputDialog(
                 title = "Новая цель",
+                quickValues = listOf(1700, 2200, 2800), // ★ ИЗМЕНЕНО
                 onDismiss = { showGoalDialog = false },
-                onConfirm = {
-                    goal = it
+                onConfirm = { value ->
+                    goal = value
                     achievementShown = false
 
                     scope.launch {
@@ -392,8 +398,7 @@ fun ScreenHome() {
             )
         }
 
-
-
+        // Анимация достижения цели
         if (showAchievement) {
             val composition by rememberLottieComposition(
                 LottieCompositionSpec.RawRes(R.raw.lottie)
@@ -406,13 +411,53 @@ fun ScreenHome() {
             )
         }
     }
+
+    //Спрашиваем пользователя хочет ли реально сбросить прогресс бар
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text("Сброс прогресса") },
+            text = {
+                Text("Вы действительно хотите сбросить все добавленные калории и прогресс за день?")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showResetDialog = false
+                        eaten = 0
+                        achievementShown = false
+                        entries.clear()
+
+                        scope.launch {
+                            context.prefsDataStore().edit {
+                                it[PrefsKeys.CAL_EATEN] = 0
+                                it[PrefsKeys.ACH_GOAL_REACHED] = false
+                                it[PrefsKeys.CAL_ENTRIES] = ""
+                            }
+                        }
+                    }
+                ) {
+                    Text("Сбросить", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
+
+
+
 }
 
 
-
+// Диалог ввода калорий
 @Composable
 fun SimpleInputDialog(
     title: String,
+    quickValues: List<Int>,
     onDismiss: () -> Unit,
     onConfirm: (Int) -> Unit
 ) {
@@ -449,35 +494,16 @@ fun SimpleInputDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-
-                    Button(
-                        onClick = {
-                            onConfirm(50)
-                            onDismiss()
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("+50")
-                    }
-
-                    Button(
-                        onClick = {
-                            onConfirm(200)
-                            onDismiss()
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("+200")
-                    }
-
-                    Button(
-                        onClick = {
-                            onConfirm(550)
-                            onDismiss()
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("+550")
+                    quickValues.forEach { value ->
+                        Button(
+                            onClick = {
+                                onConfirm(value)
+                                onDismiss()
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(value.toString())
+                        }
                     }
                 }
             }
