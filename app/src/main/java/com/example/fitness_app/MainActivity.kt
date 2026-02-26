@@ -10,6 +10,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.*
+import com.example.fitness_app.screens.SplashScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,6 +21,7 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
+        /*
         var keepSplash = true
         splashScreen.setKeepOnScreenCondition {
             keepSplash
@@ -27,13 +30,24 @@ class MainActivity : ComponentActivity() {
             delay(1000)
             keepSplash = false
         }
+         */
 
 
         enableEdgeToEdge()
         setContent {
             Fitness_appTheme {
-                MainScreen()
 
+                var showSplash by remember { mutableStateOf(true) }
+
+                if (showSplash) {
+                    SplashScreen(
+                        onFinished = {
+                            showSplash = false
+                        }
+                    )
+                } else {
+                    MainScreen()
+                }
             }
         }
     }
