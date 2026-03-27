@@ -1,4 +1,4 @@
-package com.example.fitness_app.screens
+package com.example.fitness_app.app.ui
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
@@ -17,7 +17,7 @@ import com.example.fitness_app.R
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(
+fun AppSplashScreen(
     onFinished: () -> Unit
 ) {
 

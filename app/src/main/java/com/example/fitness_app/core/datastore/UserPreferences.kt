@@ -1,4 +1,4 @@
-package com.example.fitness_app.DATA
+package com.example.fitness_app.core.datastore
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey

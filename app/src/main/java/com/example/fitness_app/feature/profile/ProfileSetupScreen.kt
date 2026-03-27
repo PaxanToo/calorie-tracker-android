@@ -1,4 +1,4 @@
-package com.example.fitness_app.screens
+package com.example.fitness_app.feature.profile
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -8,52 +8,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-
-
-enum class Gender { Мужской, Женский }
-
-enum class AgeGroup(val label: String) {
-    A9_20("9–20 лет"),
-    A21_35("21–35 лет"),
-    A36_50("36–50 лет"),
-    A51_PLUS("51+ лет")
-}
-
-enum class HeightGroup(val label: String) {
-    H150_160("150–160 см"),
-    H161_170("161–170 см"),
-    H171_180("171–180 см"),
-    H181_190("181–190 см"),
-    H191_PLUS("191+ см")
-}
-
-enum class WeightGroup(val label: String) {
-    W40_55("40–55 кг"),
-    W56_70("56–70 кг"),
-    W71_85("71–85 кг"),
-    W86_100("86–100 кг"),
-    W101_PLUS("101+ кг")
-}
-
-enum class ActivityLevel(val label: String, val factor: Float) {
-    LOW("Минимальная активность", 1.2f),
-    LIGHT("Лёгкая активность", 1.375f),
-    MEDIUM("Средняя активность", 1.55f),
-    HIGH("Высокая активность", 1.725f),
-    VERY_HIGH("Очень высокая", 1.9f)
-}
-
-enum class Goal(val label: String) {
-    LOSE("Похудение"),
-    MAINTAIN("Поддержание веса"),
-    GAIN("Набор массы")
-}
+import com.example.fitness_app.domain.model.ActivityLevel
+import com.example.fitness_app.domain.model.AgeGroup
+import com.example.fitness_app.domain.model.Gender
+import com.example.fitness_app.domain.model.Goal
+import com.example.fitness_app.domain.model.HeightGroup
+import com.example.fitness_app.domain.model.WeightGroup
 
 
 
 @Composable
-fun ScreenProfileSetup() {
+fun ProfileSetupScreen() {
 
     var step by remember { mutableStateOf(0) }
 
@@ -90,7 +55,12 @@ fun ScreenProfileSetup() {
             0 -> SelectionStep(
                 title = "Ваш пол",
                 options = Gender.values().toList(),
-                label = { it.name.lowercase().replaceFirstChar { c -> c.uppercase() } },
+                label = {
+                    when (it) {
+                        Gender.MALE -> "Мужской"
+                        Gender.FEMALE -> "Женский"
+                    }
+                },
                 selected = gender,
                 onSelect = { gender = it }
             )
@@ -139,7 +109,15 @@ fun ScreenProfileSetup() {
                 Column {
                     Text("Готово 🎉", fontSize = 22.sp)
                     Spacer(Modifier.height(16.dp))
-                    Text("Пол: ${gender?.name}")
+                    Text(
+                        "Пол: ${
+                            when (gender) {
+                                Gender.MALE -> "Мужской"
+                                Gender.FEMALE -> "Женский"
+                                null -> "-"
+                            }
+                        }"
+                    )
                     Text("Возраст: ${age?.label}")
                     Text("Рост: ${height?.label}")
                     Text("Вес: ${weight?.label}")
@@ -203,10 +181,6 @@ fun <T> SelectionStep(
 
 @Preview(showBackground = true)
 @Composable
-fun ScreenProfileSetupPreview() {
-    ScreenProfileSetup()
-}
-@Composable
-fun Screen222() {
-    ScreenProfileSetup()
+fun ProfileSetupScreenPreview() {
+    ProfileSetupScreen()
 }

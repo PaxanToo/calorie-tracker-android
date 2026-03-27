@@ -1,33 +1,42 @@
-package com.example.fitness_app.chat
+package com.example.fitness_app.feature.chat
 
 import androidx.compose.foundation.background
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.input.InputTransformation.Companion.keyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
-
-
+import androidx.compose.ui.unit.dp
+import com.example.fitness_app.feature.chat.model.ChatMessage
 
 fun getBotResponse(message: String): String {
     return when {
         message.contains("привет", ignoreCase = true) ->
-            "Привет! Рад тебя видеть "
+            "Привет! Рад тебя видеть"
 
         message.contains("помощь", ignoreCase = true) ->
-            "Я могу помочь с подсчётом калорий и мотивацией "
+            "Я могу помочь с подсчётом калорий и мотивацией"
 
         message.contains("калории", ignoreCase = true) ->
             "Средняя дневная норма — около 2000–2500 ккал"
@@ -37,11 +46,8 @@ fun getBotResponse(message: String): String {
     }
 }
 
-
-
-
 @Composable
-fun ChatBubble(message: Message) {
+fun ChatBubble(message: ChatMessage) {
     val isUser = message.isUser
 
     Row(
@@ -58,37 +64,29 @@ fun ChatBubble(message: Message) {
                 .padding(4.dp)
                 .background(
                     color = if (isUser) {
-                        androidx.compose.ui.graphics.Color(0xFF4CAF50)
+                        Color(0xFF4CAF50)
                     } else {
-                        androidx.compose.ui.graphics.Color(0xFFE0E0E0)
+                        Color(0xFFE0E0E0)
                     },
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(16.dp)
                 )
                 .padding(12.dp)
         ) {
             Text(
                 text = message.text,
                 color = if (isUser) {
-                    androidx.compose.ui.graphics.Color.White
+                    Color.White
                 } else {
-                    androidx.compose.ui.graphics.Color.Black
+                    Color.Black
                 }
             )
         }
     }
 }
 
-
-
-
-
-
-
-
-
 @Composable
-fun ScreenChat() {
-    val messages = remember { mutableStateListOf<Message>() }
+fun ChatScreen() {
+    val messages = remember { mutableStateListOf<ChatMessage>() }
     var inputText by remember { mutableStateOf("") }
 
     Column(
@@ -98,9 +96,9 @@ fun ScreenChat() {
                 start = 16.dp,
                 end = 16.dp,
                 top = 85.dp,
-                bottom = 180.dp)
+                bottom = 180.dp
+            )
     ) {
-
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
@@ -132,15 +130,21 @@ fun ScreenChat() {
                 onClick = {
                     val text = inputText.trim()
                     if (text.isNotEmpty()) {
-                        messages.add(Message(text = text, isUser = true))
+                        messages.add(
+                            ChatMessage(
+                                text = text,
+                                isUser = true
+                            )
+                        )
                         inputText = ""
 
                         val botReply = getBotResponse(text)
                         messages.add(
-                            Message(
+                            ChatMessage(
                                 text = botReply,
                                 isUser = false
-                            ) )
+                            )
+                        )
                     }
                 }
             ) {

@@ -1,19 +1,19 @@
-package com.example.fitness_app.nutrition
+package com.example.fitness_app.domain.nutrition
 
-import com.example.fitness_app.screens.*
-
-/*
- * MVP-калькулятор питания
- * Использует усреднённые значения диапазонов
- */
+import com.example.fitness_app.domain.model.ActivityLevel
+import com.example.fitness_app.domain.model.AgeGroup
+import com.example.fitness_app.domain.model.Gender
+import com.example.fitness_app.domain.model.Goal
+import com.example.fitness_app.domain.model.HeightGroup
+import com.example.fitness_app.domain.model.WeightGroup
 
 object NutritionCalculator {
 
     data class Result(
         val calories: Int,
-        val proteins: Int, // граммы
-        val fats: Int,     // граммы
-        val carbs: Int     // граммы
+        val proteins: Int,
+        val fats: Int,
+        val carbs: Int
     )
 
     fun calculate(
@@ -29,24 +29,20 @@ object NutritionCalculator {
         val heightValue = height.toAvg()
         val weightValue = weight.toAvg()
 
-        // 1. BMR (Mifflin–St Jeor, упрощённо)
-        val bmr = if (gender == Gender.Мужской) {
+        val bmr = if (gender == Gender.MALE) {
             10 * weightValue + 6.25 * heightValue - 5 * ageValue + 5
         } else {
             10 * weightValue + 6.25 * heightValue - 5 * ageValue - 161
         }
 
-        // 2. Суточная норма калорий
         var calories = (bmr * activity.factor).toInt()
 
-        // 3. Коррекция под цель
         calories = when (goal) {
             Goal.LOSE -> calories - 300
             Goal.MAINTAIN -> calories
             Goal.GAIN -> calories + 300
         }
 
-        // 4. Белки (г/кг)
         val proteinPerKg = when (goal) {
             Goal.LOSE -> 2.0
             Goal.MAINTAIN -> 1.6
@@ -54,11 +50,8 @@ object NutritionCalculator {
         }
 
         val proteins = (weightValue * proteinPerKg).toInt()
-
-        // 5. Жиры (г/кг)
         val fats = (weightValue * 0.9).toInt()
 
-        // 6. Углеводы — остаток
         val proteinCalories = proteins * 4
         val fatCalories = fats * 9
         val carbCalories = calories - (proteinCalories + fatCalories)
@@ -73,8 +66,6 @@ object NutritionCalculator {
         )
     }
 }
-
-/* -------------------- EXTENSIONS -------------------- */
 
 private fun AgeGroup.toAvg(): Int = when (this) {
     AgeGroup.A9_20 -> 15

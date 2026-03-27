@@ -1,4 +1,4 @@
-package com.example.fitness_app.screens
+package com.example.fitness_app.feature.achievements
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,12 +14,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.*
 import com.example.fitness_app.R
-import com.example.fitness_app.DATA.PrefsKeys
-import com.example.fitness_app.DATA.prefsDataStore
+import com.example.fitness_app.core.datastore.PrefsKeys // надо перенести
+import com.example.fitness_app.core.datastore.prefsDataStore // надо перенести
 import kotlinx.coroutines.flow.first
 
+
+
 @Composable
-fun ScreenAchievements() {
+fun AchievementsScreen() {
 
     val context = LocalContext.current
     var unlocked by remember { mutableStateOf(false) }

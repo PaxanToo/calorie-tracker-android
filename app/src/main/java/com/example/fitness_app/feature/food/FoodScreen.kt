@@ -1,70 +1,78 @@
-package com.example.fitness_app.food
+package com.example.fitness_app.feature.food
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fitness_app.MainViewModel
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
-import androidx.datastore.preferences.core.edit
-import com.example.fitness_app.DATA.PrefsKeys
-import com.example.fitness_app.DATA.prefsDataStore
-import com.example.fitness_app.DATA.decodeEntries
-import com.example.fitness_app.DATA.encodeEntries
-import com.example.fitness_app.DATA.CalorieEntry
+import com.example.fitness_app.core.datastore.CalorieEntry
+import com.example.fitness_app.core.datastore.PrefsKeys
+import com.example.fitness_app.core.datastore.decodeEntries
+import com.example.fitness_app.core.datastore.encodeEntries
+import com.example.fitness_app.core.datastore.prefsDataStore
+import com.example.fitness_app.data.local.entity.FoodProductEntity
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.LocalIndication
-
 
 @Composable
-fun ScreenFood(
+fun FoodScreen(
     viewModel: MainViewModel = viewModel()
 ) {
-
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
     val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
 
-
-    var selectedProduct by remember { mutableStateOf<FoodProductDb?>(null) }
+    var selectedProduct by remember { mutableStateOf<FoodProductEntity?>(null) }
     var showDialog by remember { mutableStateOf(false) }
-
 
     LaunchedEffect(Unit) {
         viewModel.ensureFoodProductsSeeded()
     }
 
-
     val products = viewModel.foodProducts.collectAsState().value
-
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        Text(
+            text = "Продукты",
+            style = MaterialTheme.typography.titleLarge
+        )
 
-
-        Text("Продукты", style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(12.dp))
-
-
+        Spacer(modifier = Modifier.height(12.dp))
 
         LazyColumn {
             items(products) { product ->
@@ -79,17 +87,20 @@ fun ScreenFood(
                             selectedProduct = product
                             showDialog = true
                         }
-
-
                 ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp)
+                    ) {
+                        Text(
+                            text = product.name,
+                            style = MaterialTheme.typography.titleMedium
+                        )
 
+                        Spacer(modifier = Modifier.height(6.dp))
 
-                    Column(Modifier.padding(14.dp)) {
-                        Text(product.name, style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.height(6.dp))
-                        Text("100г: ${product.kcal100} ккал | 200г: ${product.kcal200} | 300г: ${product.kcal300}")
-
-
+                        Text(
+                            text = "100г: ${product.kcal100} ккал | 200г: ${product.kcal200} | 300г: ${product.kcal300}"
+                        )
                     }
                 }
             }
@@ -97,24 +108,26 @@ fun ScreenFood(
     }
 
     if (showDialog && selectedProduct != null) {
-        val p = selectedProduct!!
+        val product = selectedProduct!!
 
         AlertDialog(
             onDismissRequest = {
                 showDialog = false
                 selectedProduct = null
             },
-            title = { Text(p.name) },
+            title = { Text(product.name) },
             text = { Text("Сколько съели?") },
             confirmButton = {
-                // тут можно оставить пустым, потому что всё через кнопки ниже
-                TextButton(onClick = {
-                    showDialog = false
-                    selectedProduct = null
-                }) { Text("Закрыть") }
+                TextButton(
+                    onClick = {
+                        showDialog = false
+                        selectedProduct = null
+                    }
+                ) {
+                    Text("Закрыть")
+                }
             },
             dismissButton = {
-                // ТРИ КНОПКИ 100/200/300
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -122,7 +135,7 @@ fun ScreenFood(
                     Button(
                         onClick = {
                             addCaloriesFromProduct(
-                                kcalToAdd = p.kcal100,
+                                kcalToAdd = product.kcal100,
                                 context = context,
                                 scope = scope,
                                 timeFormatter = timeFormatter
@@ -131,12 +144,14 @@ fun ScreenFood(
                             selectedProduct = null
                         },
                         modifier = Modifier.weight(1f)
-                    ) { Text("100г") }
+                    ) {
+                        Text("100г")
+                    }
 
                     Button(
                         onClick = {
                             addCaloriesFromProduct(
-                                kcalToAdd = p.kcal200,
+                                kcalToAdd = product.kcal200,
                                 context = context,
                                 scope = scope,
                                 timeFormatter = timeFormatter
@@ -145,12 +160,14 @@ fun ScreenFood(
                             selectedProduct = null
                         },
                         modifier = Modifier.weight(1f)
-                    ) { Text("200г") }
+                    ) {
+                        Text("200г")
+                    }
 
                     Button(
                         onClick = {
                             addCaloriesFromProduct(
-                                kcalToAdd = p.kcal300,
+                                kcalToAdd = product.kcal300,
                                 context = context,
                                 scope = scope,
                                 timeFormatter = timeFormatter
@@ -159,19 +176,19 @@ fun ScreenFood(
                             selectedProduct = null
                         },
                         modifier = Modifier.weight(1f)
-                    ) { Text("300г") }
+                    ) {
+                        Text("300г")
+                    }
                 }
             }
         )
     }
-
-
 }
 
 private fun addCaloriesFromProduct(
     kcalToAdd: Int,
     context: android.content.Context,
-    scope: kotlinx.coroutines.CoroutineScope,
+    scope: CoroutineScope,
     timeFormatter: DateTimeFormatter
 ) {
     scope.launch {

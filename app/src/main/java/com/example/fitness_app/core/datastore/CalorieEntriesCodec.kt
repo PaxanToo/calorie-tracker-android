@@ -1,4 +1,4 @@
-package com.example.fitness_app.DATA
+package com.example.fitness_app.core.datastore
 
 data class CalorieEntry(
     val calories: Int,

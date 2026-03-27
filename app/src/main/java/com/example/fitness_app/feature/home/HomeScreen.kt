@@ -1,9 +1,8 @@
-package com.example.fitness_app.screens
+package com.example.fitness_app.feature.home
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,8 +27,8 @@ import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.*
 import com.example.fitness_app.R
 import kotlinx.coroutines.delay
-import com.example.fitness_app.DATA.PrefsKeys
-import com.example.fitness_app.DATA.prefsDataStore
+import com.example.fitness_app.core.datastore.PrefsKeys
+import com.example.fitness_app.core.datastore.prefsDataStore
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
@@ -39,10 +38,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import kotlin.math.roundToInt
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import com.example.fitness_app.nutrition.NutritionCalculator
-import com.example.fitness_app.DATA.CalorieEntry
-import com.example.fitness_app.DATA.encodeEntries
-import com.example.fitness_app.DATA.decodeEntries
+import com.example.fitness_app.domain.nutrition.NutritionCalculator
+import com.example.fitness_app.core.datastore.CalorieEntry
+import com.example.fitness_app.core.datastore.encodeEntries
+import com.example.fitness_app.core.datastore.decodeEntries
+import com.example.fitness_app.domain.model.ActivityLevel
+import com.example.fitness_app.domain.model.AgeGroup
+import com.example.fitness_app.domain.model.Gender
+import com.example.fitness_app.domain.model.Goal
+import com.example.fitness_app.domain.model.HeightGroup
+import com.example.fitness_app.domain.model.WeightGroup
+
 
 
 
@@ -104,14 +110,14 @@ fun CircularProgressBar(
 
 // Главный экран приложения
 @Composable
-fun ScreenHome() {
+fun HomeScreen() {
     // Контекст и coroutineScope для работы с DataStore
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     // ВРЕМЕННЫЕ значения профиля пользователя (заглушки для MVP)
     // В будущем будут браться из экрана заполнения профиля
-    val gender = Gender.Мужской
+    val gender = Gender.MALE
     val age = AgeGroup.A21_35
     val heightGroup = HeightGroup.H171_180
     val weightGroup = WeightGroup.W71_85
@@ -532,6 +538,6 @@ fun SimpleInputDialog(
 
 @Preview(showBackground = true)
 @Composable
-fun ScreenHomePreview() {
-    ScreenHome()
+fun HomeScreenPreview() {
+    HomeScreen()
 }
