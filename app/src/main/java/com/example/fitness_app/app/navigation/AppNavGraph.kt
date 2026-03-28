@@ -6,7 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.fitness_app.feature.achievements.AchievementsScreen
-import com.example.fitness_app.feature.chat.ChatScreen
+import com.example.fitness_app.feature.chat.ui.ChatScreen
 import com.example.fitness_app.feature.food.FoodScreen
 import com.example.fitness_app.feature.home.HomeScreen
 import com.example.fitness_app.feature.profile.ProfileSetupScreen
@@ -29,7 +29,7 @@ fun AppNavGraph(
         }
 
         composable(ChatDestination.route) {
-            ChatScreen()
+            ChatScreen(contentPadding = contentPadding)
         }
 
         composable(AchievementsDestination.route) {
