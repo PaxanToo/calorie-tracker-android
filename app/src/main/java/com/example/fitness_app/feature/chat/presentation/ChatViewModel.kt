@@ -14,13 +14,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.example.fitness_app.feature.chat.di.ChatFeatureProvider
+import com.example.fitness_app.feature.chat.di.GigaChatFeatureProvider
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 
 class ChatViewModel : ViewModel() {
 
-    private val sendChatMessageUseCase =ChatFeatureProvider.sendChatMessageUseCase
+    private val sendChatMessageUseCase = GigaChatFeatureProvider.sendChatMessageUseCase
 
 
     private val _uiState = MutableStateFlow(
@@ -114,7 +117,9 @@ class ChatViewModel : ViewModel() {
 
         viewModelScope.launch {
             runCatching {
-                sendChatMessageUseCase(request)
+                withContext(Dispatchers.IO) {
+                    sendChatMessageUseCase(request)
+                }
             }.onSuccess { response ->
                 val aiMessage = ChatMessageUi(
                     id = System.currentTimeMillis() + 1,
@@ -127,10 +132,12 @@ class ChatViewModel : ViewModel() {
                     isLoading = false,
                     selectedImageUri = null
                 )
-            }.onFailure {
+            }.onFailure { throwable ->
+                android.util.Log.e("GigaChat", "sendMessage failed", throwable)
+
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = "Не удалось получить ответ. Попробуйте снова."
+                    errorMessage = throwable.message ?: "Не удалось получить ответ. Попробуйте снова."
                 )
             }
         }
