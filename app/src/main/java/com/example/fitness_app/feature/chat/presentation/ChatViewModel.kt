@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.example.fitness_app.feature.chat.di.GigaChatFeatureProvider
+import com.example.fitness_app.feature.chat.di.ProxyChatFeatureProvider
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 
 class ChatViewModel : ViewModel() {
 
-    private val sendChatMessageUseCase = GigaChatFeatureProvider.sendChatMessageUseCase
+    private val sendChatMessageUseCase = ProxyChatFeatureProvider.sendChatMessageUseCase
 
 
     private val _uiState = MutableStateFlow(
