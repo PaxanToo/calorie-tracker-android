@@ -1,30 +1,28 @@
 package com.example.fitness_app.feature.chat.presentation
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.fitness_app.data.ai.fake.FakeChatRepository
 import com.example.fitness_app.domain.chat.model.ChatModeDomain
 import com.example.fitness_app.domain.chat.model.ChatRequest
 import com.example.fitness_app.domain.chat.model.NutritionGoalDomain
-import com.example.fitness_app.domain.chat.usecase.SendChatMessageUseCase
+import com.example.fitness_app.feature.chat.di.ProxyChatFeatureProvider
 import com.example.fitness_app.feature.chat.presentation.model.ChatMessageUi
 import com.example.fitness_app.feature.chat.presentation.model.ChatMode
 import com.example.fitness_app.feature.chat.presentation.model.NutritionGoalUi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.example.fitness_app.feature.chat.di.ProxyChatFeatureProvider
-
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+class ChatViewModel(
+    application: Application
+) : AndroidViewModel(application) {
 
-
-class ChatViewModel : ViewModel() {
-
-    private val sendChatMessageUseCase = ProxyChatFeatureProvider.sendChatMessageUseCase
-
+    private val sendChatMessageUseCase =
+        ProxyChatFeatureProvider.provideSendChatMessageUseCase(application)
 
     private val _uiState = MutableStateFlow(
         ChatUiState(
@@ -137,7 +135,8 @@ class ChatViewModel : ViewModel() {
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = throwable.message ?: "Не удалось получить ответ. Попробуйте снова."
+                    errorMessage = throwable.message
+                        ?: "Не удалось получить ответ. Попробуйте снова."
                 )
             }
         }

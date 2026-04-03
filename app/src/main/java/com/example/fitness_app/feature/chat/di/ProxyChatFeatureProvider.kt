@@ -5,6 +5,7 @@ import com.example.fitness_app.data.ai.proxy.ProxyChatRepository
 import com.example.fitness_app.domain.chat.usecase.SendChatMessageUseCase
 import com.google.gson.Gson
 import okhttp3.OkHttpClient
+import android.app.Application
 
 object ProxyChatFeatureProvider {
 
@@ -20,7 +21,22 @@ object ProxyChatFeatureProvider {
         baseUrl = BASE_URL
     )
 
-    private val repository = ProxyChatRepository(api)
+    fun provideSendChatMessageUseCase(
+        application: Application
+    ): SendChatMessageUseCase {
+        val api = ProxyChatApi(
+            client = client,
+            gson = gson,
+            baseUrl = BASE_URL
+        )
 
-    val sendChatMessageUseCase = SendChatMessageUseCase(repository)
+        val repository = ProxyChatRepository(
+            context = application.applicationContext,
+            api = api
+        )
+
+        return SendChatMessageUseCase(repository)
+    }
+
+
 }
