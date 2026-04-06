@@ -10,7 +10,7 @@ import com.example.fitness_app.data.local.entity.ItemEntity
 
 @Database(
     entities = [ItemEntity::class, FoodProductEntity::class],
-    version = 2
+    version = 3
 )
 abstract class AppDatabase : RoomDatabase() {
 

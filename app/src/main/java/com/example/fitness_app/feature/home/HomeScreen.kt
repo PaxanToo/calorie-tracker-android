@@ -3,6 +3,7 @@ package com.example.fitness_app.feature.home
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -47,6 +48,8 @@ import com.example.fitness_app.core.datastore.DailyProgress
 import com.example.fitness_app.core.datastore.encodeDailyProgressList
 import com.example.fitness_app.core.datastore.decodeDailyProgressList
 import com.example.fitness_app.core.datastore.userProfileFlow
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
 
 
 
@@ -133,6 +136,9 @@ fun HomeScreen() {
     // Состояния цели и съеденных калорий
     var goal by remember { mutableStateOf(2200) }
     var eaten by remember { mutableStateOf(0) }
+    var proteinEaten by remember { mutableStateOf(0) }
+    var fatEaten by remember { mutableStateOf(0) }
+    var carbsEaten by remember { mutableStateOf(0) }
 
     // Флаги для анимации достижения цели
     var showAchievement by remember { mutableStateOf(false) }
@@ -161,11 +167,36 @@ fun HomeScreen() {
 
 
     // Загрузка сохранённых данных из DataStore
-    LaunchedEffect(Unit, profile) {
+    LaunchedEffect(profile) {
+        val today = LocalDate.now().toString()
+
+        context.prefsDataStore().edit { prefs ->
+            val lastActiveDate = prefs[PrefsKeys.LAST_ACTIVE_DATE]
+
+            when {
+                lastActiveDate == null -> {
+                    prefs[PrefsKeys.LAST_ACTIVE_DATE] = today
+                }
+
+                lastActiveDate != today -> {
+                    prefs[PrefsKeys.CAL_EATEN] = 0
+                    prefs[PrefsKeys.PROTEIN_EATEN] = 0
+                    prefs[PrefsKeys.FAT_EATEN] = 0
+                    prefs[PrefsKeys.CARBS_EATEN] = 0
+                    prefs[PrefsKeys.CAL_ENTRIES] = ""
+                    prefs[PrefsKeys.ACH_GOAL_REACHED] = false
+                    prefs[PrefsKeys.LAST_ACTIVE_DATE] = today
+                }
+            }
+        }
+
         val prefs = context.prefsDataStore().data.first()
 
         goal = prefs[PrefsKeys.CAL_GOAL] ?: profile?.calories ?: 2200
         eaten = prefs[PrefsKeys.CAL_EATEN] ?: 0
+        proteinEaten = prefs[PrefsKeys.PROTEIN_EATEN] ?: 0
+        fatEaten = prefs[PrefsKeys.FAT_EATEN] ?: 0
+        carbsEaten = prefs[PrefsKeys.CARBS_EATEN] ?: 0
 
         val saved = prefs[PrefsKeys.CAL_ENTRIES] ?: ""
         entries.clear()
@@ -325,6 +356,23 @@ fun HomeScreen() {
             }
 
 
+            Spacer(modifier = Modifier.height(20.dp))
+
+            NutritionProgressBlock(
+                proteins = proteinEaten,
+                fats = fatEaten,
+                carbs = carbsEaten,
+                proteinGoal = profile?.proteins ?: 0,
+                fatGoal = profile?.fats ?: 0,
+                carbsGoal = profile?.carbs ?: 0
+            )
+
+
+
+
+
+
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // Блок с дневной нормой (пока заглушка)
@@ -468,6 +516,9 @@ fun HomeScreen() {
                     onClick = {
                         showResetDialog = false
                         eaten = 0
+                        proteinEaten = 0
+                        fatEaten = 0
+                        carbsEaten = 0
                         achievementShown = false
                         entries.clear()
 
@@ -476,6 +527,9 @@ fun HomeScreen() {
 
                             context.prefsDataStore().edit { prefs ->
                                 prefs[PrefsKeys.CAL_EATEN] = 0
+                                prefs[PrefsKeys.PROTEIN_EATEN] = 0
+                                prefs[PrefsKeys.FAT_EATEN] = 0
+                                prefs[PrefsKeys.CARBS_EATEN] = 0
                                 prefs[PrefsKeys.ACH_GOAL_REACHED] = false
                                 prefs[PrefsKeys.CAL_ENTRIES] = ""
 
@@ -592,6 +646,106 @@ fun SimpleInputDialog(
             }
         }
     )
+}
+
+
+
+@Composable
+private fun NutritionProgressBlock(
+    proteins: Int,
+    fats: Int,
+    carbs: Int,
+    proteinGoal: Int,
+    fatGoal: Int,
+    carbsGoal: Int
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(4.dp),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = "Прогресс по БЖУ",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            NutritionProgressRow(
+                title = "Белки",
+                value = proteins,
+                goal = proteinGoal,
+                gradientColors = listOf(Color(0xFF42A5F5), Color(0xFF1E88E5))
+            )
+
+            NutritionProgressRow(
+                title = "Жиры",
+                value = fats,
+                goal = fatGoal,
+                gradientColors = listOf(Color(0xFFFFA726), Color(0xFFFB8C00))
+            )
+
+            NutritionProgressRow(
+                title = "Углеводы",
+                value = carbs,
+                goal = carbsGoal,
+                gradientColors = listOf(Color(0xFF66BB6A), Color(0xFF43A047))
+            )
+        }
+    }
+}
+
+@Composable
+private fun NutritionProgressRow(
+    title: String,
+    value: Int,
+    goal: Int,
+    gradientColors: List<Color>
+) {
+    val progress = if (goal > 0) {
+        (value.toFloat() / goal).coerceIn(0f, 1f)
+    } else {
+        0f
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = title,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "$value / $goal г",
+                color = Color.Gray
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(12.dp)
+                .background(
+                    color = Color(0xFFE8E8E8),
+                    shape = RoundedCornerShape(50)
+                )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress)
+                    .height(12.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(gradientColors),
+                        shape = RoundedCornerShape(50)
+                    )
+            )
+        }
+    }
 }
 
 

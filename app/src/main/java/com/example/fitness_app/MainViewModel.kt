@@ -40,11 +40,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (dao.foodProductsCount() == 0) {
                 dao.insertFoodProducts(
                     listOf(
-                        FoodProductEntity(1, "Куриная грудка", 165, 330, 495),
-                        FoodProductEntity(2, "Яблоко", 52, 104, 156),
-                        FoodProductEntity(3, "Орехи", 600, 1200, 1800),
-                        FoodProductEntity(4, "Сыр", 350, 700, 1050),
-                        FoodProductEntity(5, "Хлеб", 250, 500, 750)
+                        FoodProductEntity(
+                            id = 1,
+                            name = "Куриная грудка",
+                            kcalPer100 = 165,
+                            proteinPer100 = 31,
+                            fatPer100 = 4,
+                            carbsPer100 = 0
+                        ),
+                        FoodProductEntity(
+                            id = 2,
+                            name = "Яблоко",
+                            kcalPer100 = 52,
+                            proteinPer100 = 0,
+                            fatPer100 = 0,
+                            carbsPer100 = 14
+                        ),
+                        FoodProductEntity(
+                            id = 3,
+                            name = "Орехи",
+                            kcalPer100 = 600,
+                            proteinPer100 = 20,
+                            fatPer100 = 53,
+                            carbsPer100 = 13
+                        ),
+                        FoodProductEntity(
+                            id = 4,
+                            name = "Сыр",
+                            kcalPer100 = 350,
+                            proteinPer100 = 24,
+                            fatPer100 = 27,
+                            carbsPer100 = 1
+                        ),
+                        FoodProductEntity(
+                            id = 5,
+                            name = "Хлеб",
+                            kcalPer100 = 250,
+                            proteinPer100 = 8,
+                            fatPer100 = 3,
+                            carbsPer100 = 49
+                        )
                     )
                 )
             }

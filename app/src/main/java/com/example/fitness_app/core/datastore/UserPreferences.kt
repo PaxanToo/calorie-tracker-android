@@ -49,6 +49,10 @@ object PrefsKeys {
     val PROFILE_FATS = intPreferencesKey("profile_fats")
     val PROFILE_CARBS = intPreferencesKey("profile_carbs")
     val DAILY_PROGRESS_HISTORY = stringPreferencesKey("daily_progress_history")
+    val LAST_ACTIVE_DATE = stringPreferencesKey("last_active_date")
+    val PROTEIN_EATEN = intPreferencesKey("protein_eaten")
+    val FAT_EATEN = intPreferencesKey("fat_eaten")
+    val CARBS_EATEN = intPreferencesKey("carbs_eaten")
 }
 
 fun Context.prefsDataStore() = dataStore
