@@ -42,12 +42,11 @@ import com.example.fitness_app.domain.nutrition.NutritionCalculator
 import com.example.fitness_app.core.datastore.CalorieEntry
 import com.example.fitness_app.core.datastore.encodeEntries
 import com.example.fitness_app.core.datastore.decodeEntries
-import com.example.fitness_app.domain.model.ActivityLevel
-import com.example.fitness_app.domain.model.AgeGroup
-import com.example.fitness_app.domain.model.Gender
-import com.example.fitness_app.domain.model.Goal
-import com.example.fitness_app.domain.model.HeightGroup
-import com.example.fitness_app.domain.model.WeightGroup
+import java.time.LocalDate
+import com.example.fitness_app.core.datastore.DailyProgress
+import com.example.fitness_app.core.datastore.encodeDailyProgressList
+import com.example.fitness_app.core.datastore.decodeDailyProgressList
+import com.example.fitness_app.core.datastore.userProfileFlow
 
 
 
@@ -115,29 +114,16 @@ fun HomeScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // ВРЕМЕННЫЕ значения профиля пользователя (заглушки для MVP)
-    // В будущем будут браться из экрана заполнения профиля
-    val gender = Gender.MALE
-    val age = AgeGroup.A21_35
-    val heightGroup = HeightGroup.H171_180
-    val weightGroup = WeightGroup.W71_85
-    val activity = ActivityLevel.MEDIUM
-    val goalType = Goal.MAINTAIN
+
+
+
 
     // Состояние для подтверждения сброса
     var showResetDialog by remember { mutableStateOf(false) }
 
-    // Расчёт дневной нормы питания
-    val nutrition = remember {
-        NutritionCalculator.calculate(
-            gender = gender,
-            age = age,
-            height = heightGroup,
-            weight = weightGroup,
-            activity = activity,
-            goal = goalType
-        )
-    }
+
+    val profile by context.userProfileFlow().collectAsState(initial = null)
+
 
     // Формат времени для записей калорий
     val timeFormatter = remember {
@@ -169,11 +155,16 @@ fun HomeScreen() {
     // Список добавленных калорий
     val entries = remember { mutableStateListOf<CalorieEntry>() }
 
+
+
+
+
+
     // Загрузка сохранённых данных из DataStore
-    LaunchedEffect(Unit) {
+    LaunchedEffect(Unit, profile) {
         val prefs = context.prefsDataStore().data.first()
 
-        goal = prefs[PrefsKeys.CAL_GOAL] ?: 2200
+        goal = prefs[PrefsKeys.CAL_GOAL] ?: profile?.calories ?: 2200
         eaten = prefs[PrefsKeys.CAL_EATEN] ?: 0
 
         val saved = prefs[PrefsKeys.CAL_ENTRIES] ?: ""
@@ -347,10 +338,10 @@ fun HomeScreen() {
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text("Калории: ${nutrition.calories} ккал")
-                    Text("Белки: ${nutrition.proteins} г")
-                    Text("Жиры: ${nutrition.fats} г")
-                    Text("Углеводы: ${nutrition.carbs} г")
+                    Text("Калории: ${profile?.calories ?: goal} ккал")
+                    Text("Белки: ${profile?.proteins ?: 0} г")
+                    Text("Жиры: ${profile?.fats ?: 0} г")
+                    Text("Углеводы: ${profile?.carbs ?: 0} г")
                 }
             }
 
@@ -376,9 +367,32 @@ fun HomeScreen() {
                     )
 
                     scope.launch {
+                        val today = LocalDate.now().toString()
+
                         context.prefsDataStore().edit { prefs ->
                             prefs[PrefsKeys.CAL_EATEN] = eaten
                             prefs[PrefsKeys.CAL_ENTRIES] = encodeEntries(entries)
+
+                            val history = decodeDailyProgressList(
+                                prefs[PrefsKeys.DAILY_PROGRESS_HISTORY] ?: ""
+                            ).toMutableList()
+
+                            val updatedItem = DailyProgress(
+                                date = today,
+                                eatenCalories = eaten,
+                                goalCalories = goal,
+                                goalReached = eaten >= goal
+                            )
+
+                            val existingIndex = history.indexOfFirst { it.date == today }
+                            if (existingIndex >= 0) {
+                                history[existingIndex] = updatedItem
+                            } else {
+                                history.add(updatedItem)
+                            }
+
+                            prefs[PrefsKeys.DAILY_PROGRESS_HISTORY] =
+                                encodeDailyProgressList(history.sortedBy { it.date })
                         }
                     }
                 }
@@ -396,8 +410,31 @@ fun HomeScreen() {
                     achievementShown = false
 
                     scope.launch {
-                        context.prefsDataStore().edit {
-                            it[PrefsKeys.CAL_GOAL] = goal
+                        val today = LocalDate.now().toString()
+
+                        context.prefsDataStore().edit { prefs ->
+                            prefs[PrefsKeys.CAL_GOAL] = goal
+
+                            val history = decodeDailyProgressList(
+                                prefs[PrefsKeys.DAILY_PROGRESS_HISTORY] ?: ""
+                            ).toMutableList()
+
+                            val updatedItem = DailyProgress(
+                                date = today,
+                                eatenCalories = eaten,
+                                goalCalories = goal,
+                                goalReached = eaten >= goal
+                            )
+
+                            val existingIndex = history.indexOfFirst { it.date == today }
+                            if (existingIndex >= 0) {
+                                history[existingIndex] = updatedItem
+                            } else {
+                                history.add(updatedItem)
+                            }
+
+                            prefs[PrefsKeys.DAILY_PROGRESS_HISTORY] =
+                                encodeDailyProgressList(history.sortedBy { it.date })
                         }
                     }
                 }
@@ -435,10 +472,33 @@ fun HomeScreen() {
                         entries.clear()
 
                         scope.launch {
-                            context.prefsDataStore().edit {
-                                it[PrefsKeys.CAL_EATEN] = 0
-                                it[PrefsKeys.ACH_GOAL_REACHED] = false
-                                it[PrefsKeys.CAL_ENTRIES] = ""
+                            val today = LocalDate.now().toString()
+
+                            context.prefsDataStore().edit { prefs ->
+                                prefs[PrefsKeys.CAL_EATEN] = 0
+                                prefs[PrefsKeys.ACH_GOAL_REACHED] = false
+                                prefs[PrefsKeys.CAL_ENTRIES] = ""
+
+                                val history = decodeDailyProgressList(
+                                    prefs[PrefsKeys.DAILY_PROGRESS_HISTORY] ?: ""
+                                ).toMutableList()
+
+                                val updatedItem = DailyProgress(
+                                    date = today,
+                                    eatenCalories = 0,
+                                    goalCalories = goal,
+                                    goalReached = false
+                                )
+
+                                val existingIndex = history.indexOfFirst { it.date == today }
+                                if (existingIndex >= 0) {
+                                    history[existingIndex] = updatedItem
+                                } else {
+                                    history.add(updatedItem)
+                                }
+
+                                prefs[PrefsKeys.DAILY_PROGRESS_HISTORY] =
+                                    encodeDailyProgressList(history.sortedBy { it.date })
                             }
                         }
                     }
