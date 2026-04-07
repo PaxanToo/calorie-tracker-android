@@ -68,6 +68,9 @@ fun ChatScreen(
         },
         onSendClick = {
             viewModel.onAction(ChatAction.SendMessage)
+        },
+        onAddNutritionClick = { messageId ->
+            viewModel.onAction(ChatAction.AddNutritionToDiary(messageId))
         }
     )
 

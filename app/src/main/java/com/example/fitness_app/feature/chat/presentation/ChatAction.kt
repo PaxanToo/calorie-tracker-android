@@ -12,4 +12,5 @@ sealed interface ChatAction {
     data object SendMessage : ChatAction
     data object ClearSelectedImage : ChatAction
     data object ClearError : ChatAction
+    data class AddNutritionToDiary(val messageId: Long) : ChatAction
 }

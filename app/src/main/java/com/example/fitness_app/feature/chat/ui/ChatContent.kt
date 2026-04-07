@@ -35,6 +35,7 @@ fun ChatContent(
     onAttachClick: () -> Unit,
     onClearSelectedImage: () -> Unit,
     onSendClick: () -> Unit,
+    onAddNutritionClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -89,7 +90,10 @@ fun ChatContent(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(uiState.messages, key = { it.id }) { message ->
-                ChatMessageBubble(message = message)
+                ChatMessageBubble(
+                    message = message,
+                    onAddNutritionClick = onAddNutritionClick
+                )
             }
 
             if (uiState.isLoading) {
