@@ -61,6 +61,11 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.example.fitness_app.R
+import kotlinx.coroutines.delay
 
 @Composable
 fun FoodScreen(
@@ -72,6 +77,7 @@ fun FoodScreen(
 
     var selectedProduct by remember { mutableStateOf<FoodProductEntity?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    var showAchievementAnimation by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.ensureFoodProductsSeeded()
@@ -79,38 +85,54 @@ fun FoodScreen(
 
     val products = viewModel.foodProducts.collectAsState().value
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 20.dp)
-    ) {
-        Text(
-            text = "Продукты",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Text(
-            text = "Выберите продукт и порцию, чтобы добавить калории и БЖУ в дневной прогресс.",
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 20.dp)
         ) {
-            items(products) { product ->
-                FoodProductCard(
-                    product = product,
-                    onClick = {
-                        selectedProduct = product
-                        showDialog = true
-                    }
-                )
+            Text(
+                text = "Продукты",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "Выберите продукт и порцию, чтобы добавить калории и БЖУ в дневной прогресс.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(products) { product ->
+                    FoodProductCard(
+                        product = product,
+                        onClick = {
+                            selectedProduct = product
+                            showDialog = true
+                        }
+                    )
+                }
             }
+        }
+
+        if (showAchievementAnimation) {
+            val composition by rememberLottieComposition(
+                LottieCompositionSpec.RawRes(R.raw.lottie)
+            )
+
+            LottieAnimation(
+                composition = composition,
+                iterations = 1,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(220.dp)
+            )
         }
     }
 
@@ -160,7 +182,14 @@ fun FoodScreen(
                                     grams = 100,
                                     context = context,
                                     scope = scope,
-                                    timeFormatter = timeFormatter
+                                    timeFormatter = timeFormatter,
+                                    onFirstProductAchievementUnlocked = {
+                                        showAchievementAnimation = true
+                                        scope.launch {
+                                            delay(1800)
+                                            showAchievementAnimation = false
+                                        }
+                                    }
                                 )
                                 showDialog = false
                                 selectedProduct = null
@@ -177,7 +206,14 @@ fun FoodScreen(
                                     grams = 200,
                                     context = context,
                                     scope = scope,
-                                    timeFormatter = timeFormatter
+                                    timeFormatter = timeFormatter,
+                                    onFirstProductAchievementUnlocked = {
+                                        showAchievementAnimation = true
+                                        scope.launch {
+                                            delay(1800)
+                                            showAchievementAnimation = false
+                                        }
+                                    }
                                 )
                                 showDialog = false
                                 selectedProduct = null
@@ -194,7 +230,14 @@ fun FoodScreen(
                                     grams = 300,
                                     context = context,
                                     scope = scope,
-                                    timeFormatter = timeFormatter
+                                    timeFormatter = timeFormatter,
+                                    onFirstProductAchievementUnlocked = {
+                                        showAchievementAnimation = true
+                                        scope.launch {
+                                            delay(1800)
+                                            showAchievementAnimation = false
+                                        }
+                                    }
                                 )
                                 showDialog = false
                                 selectedProduct = null
@@ -349,10 +392,14 @@ private fun addNutritionFromProduct(
     grams: Int,
     context: Context,
     scope: CoroutineScope,
-    timeFormatter: DateTimeFormatter
+    timeFormatter: DateTimeFormatter,
+    onFirstProductAchievementUnlocked: () -> Unit
 ) {
     scope.launch {
         val prefs = context.prefsDataStore().data.first()
+
+        val wasFirstProductAchievementUnlocked =
+            prefs[PrefsKeys.ACH_FIRST_PRODUCT_ADDED] ?: false
 
         val kcalToAdd = calculateScaled(product.kcalPer100, grams)
         val proteinToAdd = calculateScaled(product.proteinPer100, grams)
@@ -408,6 +455,11 @@ private fun addNutritionFromProduct(
             editPrefs[PrefsKeys.CAL_ENTRIES] = encodeEntries(entries)
             editPrefs[PrefsKeys.DAILY_PROGRESS_HISTORY] =
                 encodeDailyProgressList(history.sortedBy { it.date })
+            editPrefs[PrefsKeys.ACH_FIRST_PRODUCT_ADDED] = true
         }
+        if (!wasFirstProductAchievementUnlocked) {
+            onFirstProductAchievementUnlocked()
+        }
+
     }
 }

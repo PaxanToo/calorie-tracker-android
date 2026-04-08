@@ -22,6 +22,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fitness_app.feature.chat.presentation.ChatAction
 import com.example.fitness_app.feature.chat.presentation.ChatViewModel
 import java.io.File
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 
 @Composable
 fun ChatScreen(
@@ -30,6 +32,12 @@ fun ChatScreen(
     val context = LocalContext.current
     val viewModel: ChatViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
+    LaunchedEffect(uiState.showAchievementAnimation) {
+        if (uiState.showAchievementAnimation) {
+            delay(1800)
+            viewModel.onAction(ChatAction.ConsumeAchievementAnimation)
+        }
+    }
 
     var showImageSourceDialog by remember { mutableStateOf(false) }
     var tempCameraImageUri by remember { mutableStateOf<Uri?>(null) }

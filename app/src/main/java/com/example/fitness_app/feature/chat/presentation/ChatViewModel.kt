@@ -97,6 +97,12 @@ class ChatViewModel(
             ChatAction.SendMessage -> {
                 sendMessage()
             }
+
+            ChatAction.ConsumeAchievementAnimation -> {
+                _uiState.value = _uiState.value.copy(
+                    showAchievementAnimation = false
+                )
+            }
         }
     }
 
@@ -180,6 +186,8 @@ class ChatViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val prefs = context.prefsDataStore().data.first()
 
+            val wasAiAchievementUnlocked = prefs[PrefsKeys.ACH_AI_MEAL_ADDED] ?: false
+
             val currentCalories = prefs[PrefsKeys.CAL_EATEN] ?: 0
             val currentProteins = prefs[PrefsKeys.PROTEIN_EATEN] ?: 0
             val currentFats = prefs[PrefsKeys.FAT_EATEN] ?: 0
@@ -229,6 +237,8 @@ class ChatViewModel(
                 editPrefs[PrefsKeys.CAL_ENTRIES] = encodeEntries(entries)
                 editPrefs[PrefsKeys.DAILY_PROGRESS_HISTORY] =
                     encodeDailyProgressList(history.sortedBy { it.date })
+
+                editPrefs[PrefsKeys.ACH_AI_MEAL_ADDED] = true
             }
 
             val updatedMessages = _uiState.value.messages.map {
@@ -240,7 +250,8 @@ class ChatViewModel(
             }
 
             _uiState.value = _uiState.value.copy(
-                messages = updatedMessages
+                messages = updatedMessages,
+                showAchievementAnimation = !wasAiAchievementUnlocked
             )
         }
     }

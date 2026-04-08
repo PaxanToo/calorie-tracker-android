@@ -24,6 +24,14 @@ import com.example.fitness_app.feature.chat.ui.components.ChatInputBar
 import com.example.fitness_app.feature.chat.ui.components.ChatMessageBubble
 import com.example.fitness_app.feature.chat.ui.components.ChatQuickActions
 import com.example.fitness_app.feature.chat.ui.components.SelectedImageBar
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.example.fitness_app.R
 
 @Composable
 fun ChatContent(
@@ -38,86 +46,105 @@ fun ChatContent(
     onAddNutritionClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .padding(contentPadding)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        Text(
-            text = "AI Чат",
-            style = MaterialTheme.typography.titleLarge
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        ChatQuickActions(
-            selectedMode = uiState.selectedMode,
-            onModeSelected = onModeSelected
-        )
-
-        if (uiState.selectedMode != ChatMode.DEFAULT) {
-            Spacer(modifier = Modifier.height(8.dp))
-
-            AssistChip(
-                onClick = { onModeSelected(ChatMode.DEFAULT) },
-                label = { Text("Сбросить режим") }
-            )
-        }
-
-        if (uiState.selectedMode == ChatMode.DISH_SUGGESTION) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            ChatGoalSelector(
-                selectedGoal = uiState.selectedGoal,
-                onGoalSelected = onGoalSelected
-            )
-        }
-
-        if (uiState.selectedImageUri != null) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            SelectedImageBar(
-                imageUri = uiState.selectedImageUri,
-                onClearClick = onClearSelectedImage
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            items(uiState.messages, key = { it.id }) { message ->
-                ChatMessageBubble(
-                    message = message,
-                    onAddNutritionClick = onAddNutritionClick
+            Text(
+                text = "AI Чат",
+                style = MaterialTheme.typography.titleLarge
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            ChatQuickActions(
+                selectedMode = uiState.selectedMode,
+                onModeSelected = onModeSelected
+            )
+
+            if (uiState.selectedMode != ChatMode.DEFAULT) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                AssistChip(
+                    onClick = { onModeSelected(ChatMode.DEFAULT) },
+                    label = { Text("Сбросить режим") }
                 )
             }
 
-            if (uiState.isLoading) {
-                item {
-                    CircularProgressIndicator()
+            if (uiState.selectedMode == ChatMode.DISH_SUGGESTION) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                ChatGoalSelector(
+                    selectedGoal = uiState.selectedGoal,
+                    onGoalSelected = onGoalSelected
+                )
+            }
+
+            if (uiState.selectedImageUri != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SelectedImageBar(
+                    imageUri = uiState.selectedImageUri,
+                    onClearClick = onClearSelectedImage
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(uiState.messages, key = { it.id }) { message ->
+                    ChatMessageBubble(
+                        message = message,
+                        onAddNutritionClick = onAddNutritionClick
+                    )
+                }
+
+                if (uiState.isLoading) {
+                    item {
+                        CircularProgressIndicator()
+                    }
                 }
             }
-        }
 
-        if (uiState.errorMessage != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = uiState.errorMessage,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium
+            if (uiState.errorMessage != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = uiState.errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            ChatInputBar(
+                inputText = uiState.inputText,
+                isLoading = uiState.isLoading,
+                onInputChanged = onInputChanged,
+                onAttachClick = onAttachClick,
+                onSendClick = onSendClick
             )
         }
 
-        ChatInputBar(
-            inputText = uiState.inputText,
-            isLoading = uiState.isLoading,
-            onInputChanged = onInputChanged,
-            onAttachClick = onAttachClick,
-            onSendClick = onSendClick
-        )
+        if (uiState.showAchievementAnimation) {
+            val composition by rememberLottieComposition(
+                LottieCompositionSpec.RawRes(R.raw.lottie)
+            )
+
+            LottieAnimation(
+                composition = composition,
+                iterations = 1,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(220.dp)
+            )
+        }
     }
 }

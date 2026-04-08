@@ -143,6 +143,7 @@ fun HomeScreen() {
     // Флаги для анимации достижения цели
     var showAchievement by remember { mutableStateOf(false) }
     var achievementShown by remember { mutableStateOf(false) }
+    var shownGoalCompletionMilestone by remember { mutableStateOf<Int?>(null) }
 
     // Управление диалогами
     var showAddDialog by remember { mutableStateOf(false) }
@@ -197,6 +198,14 @@ fun HomeScreen() {
         proteinEaten = prefs[PrefsKeys.PROTEIN_EATEN] ?: 0
         fatEaten = prefs[PrefsKeys.FAT_EATEN] ?: 0
         carbsEaten = prefs[PrefsKeys.CARBS_EATEN] ?: 0
+        achievementShown = prefs[PrefsKeys.ACH_GOAL_REACHED] ?: false
+        val totalCompletions = prefs[PrefsKeys.ACH_TOTAL_GOAL_COMPLETIONS] ?: 0
+        shownGoalCompletionMilestone = when {
+            totalCompletions >= 7 -> 7
+            totalCompletions >= 3 -> 3
+            totalCompletions >= 1 -> 1
+            else -> null
+        }
 
         val saved = prefs[PrefsKeys.CAL_ENTRIES] ?: ""
         entries.clear()
@@ -211,16 +220,36 @@ fun HomeScreen() {
     // Проверка достижения цели
     LaunchedEffect(eaten, goal) {
         if (eaten >= goal && !achievementShown) {
-            showAchievement = true
             achievementShown = true
+
+            var unlockedMilestone: Int? = null
+
+            context.prefsDataStore().edit { prefs ->
+                val alreadyReachedToday = prefs[PrefsKeys.ACH_GOAL_REACHED] ?: false
+
+                if (!alreadyReachedToday) {
+                    val currentCount = prefs[PrefsKeys.ACH_TOTAL_GOAL_COMPLETIONS] ?: 0
+                    val newCount = currentCount + 1
+
+                    prefs[PrefsKeys.ACH_TOTAL_GOAL_COMPLETIONS] = newCount
+                    prefs[PrefsKeys.ACH_GOAL_REACHED] = true
+
+                    unlockedMilestone = when {
+                        newCount >= 7 && shownGoalCompletionMilestone != 7 -> 7
+                        newCount >= 3 && shownGoalCompletionMilestone != 3 -> 3
+                        newCount >= 1 && shownGoalCompletionMilestone != 1 -> 1
+                        else -> null
+                    }
+                }
+            }
+
+            showAchievement = true
+            unlockedMilestone?.let {
+                shownGoalCompletionMilestone = it
+            }
 
             delay(2000)
             showAchievement = false
-
-            // Сохраняем факт достижения цели
-            context.prefsDataStore().edit {
-                it[PrefsKeys.ACH_GOAL_REACHED] = true
-            }
         }
     }
 
@@ -519,7 +548,6 @@ fun HomeScreen() {
                         proteinEaten = 0
                         fatEaten = 0
                         carbsEaten = 0
-                        achievementShown = false
                         entries.clear()
 
                         scope.launch {
@@ -530,7 +558,6 @@ fun HomeScreen() {
                                 prefs[PrefsKeys.PROTEIN_EATEN] = 0
                                 prefs[PrefsKeys.FAT_EATEN] = 0
                                 prefs[PrefsKeys.CARBS_EATEN] = 0
-                                prefs[PrefsKeys.ACH_GOAL_REACHED] = false
                                 prefs[PrefsKeys.CAL_ENTRIES] = ""
 
                                 val history = decodeDailyProgressList(

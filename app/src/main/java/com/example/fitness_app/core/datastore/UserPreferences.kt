@@ -53,6 +53,9 @@ object PrefsKeys {
     val PROTEIN_EATEN = intPreferencesKey("protein_eaten")
     val FAT_EATEN = intPreferencesKey("fat_eaten")
     val CARBS_EATEN = intPreferencesKey("carbs_eaten")
+    val ACH_TOTAL_GOAL_COMPLETIONS = intPreferencesKey("ach_total_goal_completions")
+    val ACH_FIRST_PRODUCT_ADDED = booleanPreferencesKey("ach_first_product_added")
+    val ACH_AI_MEAL_ADDED = booleanPreferencesKey("ach_ai_meal_added")
 }
 
 fun Context.prefsDataStore() = dataStore
@@ -135,6 +138,20 @@ suspend fun Context.clearUserProfile() {
         preferences.remove(PrefsKeys.PROFILE_PROTEINS)
         preferences.remove(PrefsKeys.PROFILE_FATS)
         preferences.remove(PrefsKeys.PROFILE_CARBS)
+
+        preferences.remove(PrefsKeys.CAL_GOAL)
+        preferences.remove(PrefsKeys.CAL_EATEN)
+        preferences.remove(PrefsKeys.PROTEIN_EATEN)
+        preferences.remove(PrefsKeys.FAT_EATEN)
+        preferences.remove(PrefsKeys.CARBS_EATEN)
+        preferences.remove(PrefsKeys.CAL_ENTRIES)
+        preferences.remove(PrefsKeys.DAILY_PROGRESS_HISTORY)
+        preferences.remove(PrefsKeys.LAST_ACTIVE_DATE)
+
+        preferences.remove(PrefsKeys.ACH_GOAL_REACHED)
+        preferences.remove(PrefsKeys.ACH_TOTAL_GOAL_COMPLETIONS)
+        preferences.remove(PrefsKeys.ACH_FIRST_PRODUCT_ADDED)
+        preferences.remove(PrefsKeys.ACH_AI_MEAL_ADDED)
     }
 }
 

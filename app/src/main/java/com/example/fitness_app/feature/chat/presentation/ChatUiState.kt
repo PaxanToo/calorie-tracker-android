@@ -12,5 +12,6 @@ data class ChatUiState(
     val selectedGoal: NutritionGoalUi? = null,
     val selectedImageUri: Uri? = null,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val showAchievementAnimation: Boolean = false
 )
