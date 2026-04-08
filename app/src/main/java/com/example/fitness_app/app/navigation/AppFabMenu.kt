@@ -79,7 +79,8 @@ fun AppFabMenu(
             shape = CircleShape,
             containerColor = MaterialTheme.colorScheme.primary,
             modifier = Modifier
-                .scale(1.1f)
+                .offset(y = 26.dp)
+                .scale(1.4f)
                 .rotate(225f * animationProgress),
             elevation = FloatingActionButtonDefaults.elevation(0.dp)
         ) {

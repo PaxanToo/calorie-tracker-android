@@ -1,9 +1,14 @@
 package com.example.fitness_app.app.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -15,6 +20,7 @@ import com.example.fitness_app.feature.food.FoodScreen
 import com.example.fitness_app.feature.home.HomeScreen
 import com.example.fitness_app.feature.profile.ProfileScreen
 import com.example.fitness_app.feature.profile.ProfileSetupScreen
+import kotlinx.coroutines.flow.map
 
 const val PROFILE_SETUP_ROUTE = "profile_setup"
 
@@ -24,9 +30,22 @@ fun AppNavGraph(
     contentPadding: PaddingValues
 ) {
     val context = LocalContext.current
-    val hasProfile by context.hasProfileFlow().collectAsState(initial = false)
 
-    val startDestination = if (hasProfile) {
+    val hasProfile: Boolean? by context.hasProfileFlow()
+        .map<Boolean, Boolean?> { it }
+        .collectAsState(initial = null)
+
+    if (hasProfile == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val startDestination = if (hasProfile == true) {
         HomeDestination.route
     } else {
         PROFILE_SETUP_ROUTE
@@ -58,7 +77,7 @@ fun AppNavGraph(
         composable(PROFILE_SETUP_ROUTE) {
             ProfileSetupScreen(
                 onSaved = {
-                    if (hasProfile) {
+                    if (hasProfile == true) {
                         navHostController.popBackStack()
                     } else {
                         navHostController.navigate(HomeDestination.route) {

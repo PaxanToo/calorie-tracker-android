@@ -310,7 +310,7 @@ fun HomeScreen() {
                         interactionSource = remember { MutableInteractionSource() },
                         elevation = FloatingActionButtonDefaults.elevation(0.dp),
                         modifier = Modifier
-                            .offset((-70).dp * fabProgress, (-10).dp * fabProgress)
+                            .offset((-75).dp * fabProgress, (45).dp * fabProgress)
                             .scale(0.7f + 0.3f * fabProgress)
                             .alpha(fabProgress)
                     ) { Text("+") }
@@ -326,7 +326,7 @@ fun HomeScreen() {
                         interactionSource = remember { MutableInteractionSource() },
                         elevation = FloatingActionButtonDefaults.elevation(0.dp),
                         modifier = Modifier
-                            .offset(0.dp, (-80).dp * fabProgress)
+                            .offset(0.dp, (45).dp * fabProgress)
                             .scale(0.7f + 0.3f * fabProgress)
                             .alpha(fabProgress)
                     ) { Text("🎯") }
@@ -342,7 +342,7 @@ fun HomeScreen() {
                         interactionSource = remember { MutableInteractionSource() },
                         elevation = FloatingActionButtonDefaults.elevation(0.dp),
                         modifier = Modifier
-                            .offset(70.dp * fabProgress, (-10).dp * fabProgress)
+                            .offset(75.dp * fabProgress, (45).dp * fabProgress)
                             .scale(0.7f + 0.3f * fabProgress)
                             .alpha(fabProgress),
                         containerColor = Color.Red
@@ -396,31 +396,6 @@ fun HomeScreen() {
                 carbsGoal = profile?.carbs ?: 0
             )
 
-
-
-
-
-
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Блок с дневной нормой (пока заглушка)
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Ваша дневная норма",
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text("Калории: ${profile?.calories ?: goal} ккал")
-                    Text("Белки: ${profile?.proteins ?: 0} г")
-                    Text("Жиры: ${profile?.fats ?: 0} г")
-                    Text("Углеводы: ${profile?.carbs ?: 0} г")
-                }
-            }
 
 
         }

@@ -18,7 +18,7 @@
         <item name="windowSplashScreenBackground">@color/splash_bg</item>
 
         //Картинка яблока
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/kluch</item>
+
 
 
         <item name="windowSplashScreenAnimationDuration">1000</item>
