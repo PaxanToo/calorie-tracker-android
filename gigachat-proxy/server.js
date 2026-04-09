@@ -143,7 +143,7 @@ async function sendChatMessage(accessToken, userMessage, mode, goal) {
   const response = await axios.post(
     "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
     {
-      model: "GigaChat-2",
+      model: "GigaChat-2-Max",
       messages: [
         {
           role: "system",
@@ -200,7 +200,7 @@ async function sendChatMessageWithImage(accessToken, userMessage, fileId, mode, 
   const response = await axios.post(
     "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
     {
-      model: "GigaChat-2",
+      model: "GigaChat-2-Max",
       messages: [
         {
           role: "system",

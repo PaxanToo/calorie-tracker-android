@@ -1,15 +1,19 @@
 package com.example.fitness_app.data.ai.proxy
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import com.google.gson.Gson
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import android.content.Context
-import android.net.Uri
-import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 class ProxyChatApi(
     private val client: OkHttpClient,
@@ -36,8 +40,6 @@ class ProxyChatApi(
         }
     }
 
-
-
     fun sendImageMessage(
         context: Context,
         imageUri: Uri,
@@ -45,8 +47,7 @@ class ProxyChatApi(
         mode: String,
         goal: String?
     ): ProxyImageChatResponse {
-        val file = copyUriToTempFile(context, imageUri)
-        val mimeType = context.contentResolver.getType(imageUri) ?: "image/jpeg"
+        val file = copyUriToCompressedTempFile(context, imageUri)
 
         val multipartBody = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
@@ -56,7 +57,7 @@ class ProxyChatApi(
             .addFormDataPart(
                 "image",
                 file.name,
-                file.asRequestBody(mimeType.toMediaType())
+                file.asRequestBody("image/jpeg".toMediaType())
             )
             .build()
 
@@ -74,19 +75,52 @@ class ProxyChatApi(
         }
     }
 
+    private fun copyUriToCompressedTempFile(context: Context, uri: Uri): File {
+        val originalBytes = context.contentResolver.openInputStream(uri)?.use { input ->
+            input.readBytes()
+        } ?: error("Cannot open input stream from uri")
 
-    private fun copyUriToTempFile(context: Context, uri: Uri): File {
+        val originalBitmap = BitmapFactory.decodeByteArray(
+            originalBytes,
+            0,
+            originalBytes.size
+        ) ?: error("Cannot decode bitmap from uri")
+
+        val resizedBitmap = resizeBitmapIfNeeded(
+            bitmap = originalBitmap,
+            maxSide = 1280
+        )
+
         val tempFile = File.createTempFile("chat_image_", ".jpg", context.cacheDir)
 
-        context.contentResolver.openInputStream(uri).use { inputStream ->
-            requireNotNull(inputStream) { "Cannot open input stream from uri" }
-
-            tempFile.outputStream().use { outputStream ->
-                inputStream.copyTo(outputStream)
-            }
+        tempFile.outputStream().use { outputStream ->
+            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
         }
+
+        if (resizedBitmap != originalBitmap) {
+            originalBitmap.recycle()
+        }
+        resizedBitmap.recycle()
 
         return tempFile
     }
 
+    private fun resizeBitmapIfNeeded(
+        bitmap: Bitmap,
+        maxSide: Int
+    ): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        val currentMaxSide = max(width, height)
+
+        if (currentMaxSide <= maxSide) {
+            return bitmap
+        }
+
+        val scale = maxSide.toFloat() / currentMaxSide.toFloat()
+        val newWidth = (width * scale).roundToInt()
+        val newHeight = (height * scale).roundToInt()
+
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+    }
 }
