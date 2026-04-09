@@ -9,7 +9,7 @@ import android.app.Application
 
 object ProxyChatFeatureProvider {
 
-    private const val BASE_URL = "http://192.168.0.47:3000"
+    private const val BASE_URL = "https://untamed.fxtun.dev"
 
     private val gson = Gson()
 
