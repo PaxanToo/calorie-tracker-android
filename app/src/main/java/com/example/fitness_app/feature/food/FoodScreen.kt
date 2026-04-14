@@ -66,6 +66,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.fitness_app.R
 import kotlinx.coroutines.delay
+import androidx.compose.material3.OutlinedTextField
 
 @Composable
 fun FoodScreen(
@@ -78,12 +79,16 @@ fun FoodScreen(
     var selectedProduct by remember { mutableStateOf<FoodProductEntity?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     var showAchievementAnimation by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         viewModel.ensureFoodProductsSeeded()
     }
 
     val products = viewModel.foodProducts.collectAsState().value
+    val filteredProducts = products.filter { product ->
+        product.name.contains(searchQuery.trim(), ignoreCase = true)
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -106,17 +111,39 @@ fun FoodScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(products) { product ->
-                    FoodProductCard(
-                        product = product,
-                        onClick = {
-                            selectedProduct = product
-                            showDialog = true
-                        }
-                    )
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Поиск продукта") },
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+
+
+
+
+            if (filteredProducts.isEmpty()) {
+                Text(
+                    text = "Ничего не найдено",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(filteredProducts) { product ->
+                        FoodProductCard(
+                            product = product,
+                            onClick = {
+                                selectedProduct = product
+                                showDialog = true
+                            }
+                        )
+                    }
                 }
             }
         }
