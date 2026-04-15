@@ -1,69 +1,53 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const crypto = require("crypto");
-const fs = require("fs");
-const path = require("path");
-const https = require("https");
 const multer = require("multer");
-const FormData = require("form-data");
 
 require("dotenv").config();
 
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
-const upload = multer({ storage: multer.memoryStorage() });
-
-const certificatePath = path.join(
-  __dirname,
-  "certs",
-  "russian_trusted_root_ca.cer"
-);
-
-const httpsAgent = new https.Agent({
-  ca: fs.readFileSync(certificatePath),
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
 });
 
-app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "gigachat proxy is running",
-  });
-});
+const PORT = process.env.PORT || 3000;
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen3.5:4b";
 
-async function getAccessToken() {
-  const authKey = process.env.GIGACHAT_AUTH_KEY;
+app.get("/health", async (req, res) => {
+  try {
+    const response = await axios.get(`${OLLAMA_BASE_URL}/api/tags`, {
+      timeout: 5000,
+    });
 
-  if (!authKey) {
-    throw new Error("GIGACHAT_AUTH_KEY is missing in .env");
+    res.json({
+      status: "ok",
+      message: "ollama proxy is running",
+      model: OLLAMA_MODEL,
+      ollamaReachable: true,
+      modelsCount: response.data?.models?.length || 0,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: "ollama proxy is running, but Ollama is unavailable",
+      model: OLLAMA_MODEL,
+      ollamaReachable: false,
+      error: error.message,
+    });
   }
-
-  const body = new URLSearchParams();
-  body.append("scope", "GIGACHAT_API_PERS");
-
-  const response = await axios.post(
-    "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
-    body.toString(),
-    {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "application/json",
-        "RqUID": crypto.randomUUID(),
-        "Authorization": `Basic ${authKey}`,
-      },
-      httpsAgent: httpsAgent,
-    }
-  );
-
-  return response.data;
-}
+});
 
 function buildSystemPrompt(mode, goal) {
   if (mode === "MEAL_CALORIES") {
-  return `Ты — AI-помощник в мобильном приложении по питанию.
+    return `Ты — AI-помощник в мобильном приложении по питанию.
 
 Пользователь отправляет фотографию блюда.
 Твоя задача:
@@ -88,7 +72,7 @@ function buildSystemPrompt(mode, goal) {
 1–2 коротких предложения о точности оценки или составе блюда.
 
 Если точно определить блюдо нельзя, всё равно дай наиболее вероятную оценку и прямо укажи, что она приблизительная.`;
-}
+  }
 
   if (mode === "DISH_SUGGESTION") {
     let goalText = "без конкретной цели";
@@ -139,56 +123,34 @@ function buildSystemPrompt(mode, goal) {
 - не используй странные интерпретации и не драматизируй.`;
 }
 
-async function sendChatMessage(accessToken, userMessage, mode, goal) {
+function buildUserPrompt(userMessage, mode, goal) {
+  const systemPrompt = buildSystemPrompt(mode, goal);
+
+  if (!userMessage || !userMessage.trim()) {
+    return systemPrompt;
+  }
+
+  return `${systemPrompt}
+
+Запрос пользователя:
+${userMessage.trim()}`;
+}
+
+async function generateText(prompt) {
   const response = await axios.post(
-    "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
+    `${OLLAMA_BASE_URL}/api/generate`,
     {
-      model: "GigaChat-2-Max",
-      messages: [
-        {
-          role: "system",
-          content: buildSystemPrompt(mode, goal),
-        },
-        {
-          role: "user",
-          content: userMessage,
-        },
-      ],
+      model: OLLAMA_MODEL,
+      prompt,
       stream: false,
+      think: false,
+      keep_alive: "30m",
     },
     {
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Authorization": `Bearer ${accessToken}`,
       },
-      httpsAgent: httpsAgent,
-    }
-  );
-
-  return response.data;
-}
-
-async function uploadImageToGigaChat(accessToken, file) {
-  const form = new FormData();
-
-  form.append("file", file.buffer, {
-    filename: file.originalname || "image.jpg",
-    contentType: file.mimetype || "image/jpeg",
-  });
-
-  form.append("purpose", "general");
-
-  const response = await axios.post(
-    "https://gigachat.devices.sberbank.ru/api/v1/files",
-    form,
-    {
-      headers: {
-        ...form.getHeaders(),
-        Accept: "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      httpsAgent: httpsAgent,
+      timeout: 180000,
       maxBodyLength: Infinity,
     }
   );
@@ -196,54 +158,30 @@ async function uploadImageToGigaChat(accessToken, file) {
   return response.data;
 }
 
-async function sendChatMessageWithImage(accessToken, userMessage, fileId, mode, goal) {
+async function generateWithImage(prompt, fileBuffer) {
+  const base64Image = fileBuffer.toString("base64");
+
   const response = await axios.post(
-    "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
+    `${OLLAMA_BASE_URL}/api/generate`,
     {
-      model: "GigaChat-2-Max",
-      messages: [
-        {
-          role: "system",
-          content: buildSystemPrompt(mode, goal),
-        },
-        {
-          role: "user",
-          content: userMessage,
-          attachments: [fileId],
-        },
-      ],
+      model: OLLAMA_MODEL,
+      prompt,
+      images: [base64Image],
       stream: false,
+      think: false,
+      keep_alive: "30m",
     },
     {
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${accessToken}`,
       },
-      httpsAgent: httpsAgent,
+      timeout: 240000,
+      maxBodyLength: Infinity,
     }
   );
 
   return response.data;
 }
-
-app.get("/api/token/test", async (req, res) => {
-  try {
-    const tokenData = await getAccessToken();
-
-    res.json({
-      success: true,
-      tokenData,
-    });
-  } catch (error) {
-    console.error("Token test failed:", error.response?.data || error.message);
-
-    res.status(500).json({
-      success: false,
-      error: error.response?.data || error.message,
-    });
-  }
-});
 
 app.post("/api/chat/text", async (req, res) => {
   try {
@@ -256,26 +194,27 @@ app.post("/api/chat/text", async (req, res) => {
       });
     }
 
-    const tokenData = await getAccessToken();
-
-    const chatData = await sendChatMessage(
-      tokenData.access_token,
+    const prompt = buildUserPrompt(
       message,
       mode || "DEFAULT",
       goal || null
     );
 
+    const ollamaData = await generateText(prompt);
+
     const answer =
-      chatData?.choices?.[0]?.message?.content ||
-      "GigaChat вернул пустой ответ";
+      ollamaData?.response?.trim() || "Ollama вернул пустой ответ";
 
     res.json({
       success: true,
       answer,
-      raw: chatData,
+      raw: ollamaData,
     });
   } catch (error) {
-    console.error("Text chat failed:", error.response?.data || error.message);
+    console.error(
+      "Text chat failed:",
+      error.response?.data || error.message
+    );
 
     res.status(500).json({
       success: false,
@@ -296,46 +235,34 @@ app.post("/api/chat/image", upload.single("image"), async (req, res) => {
       });
     }
 
-    const tokenData = await getAccessToken();
-
-    const uploadedFile = await uploadImageToGigaChat(
-      tokenData.access_token,
-      file
-    );
-
-    const fileId = uploadedFile?.id;
-
-    if (!fileId) {
-      throw new Error("Failed to upload image to GigaChat");
-    }
-
     const safeMessage =
       message && message.trim()
-        ? message
+        ? message.trim()
         : mode === "MEAL_CALORIES"
           ? "Определи блюдо на фото и оцени его примерные калории, белки, жиры и углеводы."
           : "Определи продукты на фото и предложи, что можно приготовить.";
 
-    const chatData = await sendChatMessageWithImage(
-      tokenData.access_token,
+    const prompt = buildUserPrompt(
       safeMessage,
-      fileId,
       mode || "DEFAULT",
       goal || null
     );
 
+    const ollamaData = await generateWithImage(prompt, file.buffer);
+
     const answer =
-      chatData?.choices?.[0]?.message?.content ||
-      "GigaChat вернул пустой ответ";
+      ollamaData?.response?.trim() || "Ollama вернул пустой ответ";
 
     res.json({
       success: true,
       answer,
-      raw: chatData,
-      uploadedFileId: fileId,
+      raw: ollamaData,
     });
   } catch (error) {
-    console.error("Image chat failed:", error.response?.data || error.message);
+    console.error(
+      "Image chat failed:",
+      error.response?.data || error.message
+    );
 
     res.status(500).json({
       success: false,
@@ -344,8 +271,8 @@ app.post("/api/chat/image", upload.single("image"), async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
+  console.log(`Using Ollama model: ${OLLAMA_MODEL}`);
+  console.log(`Ollama base URL: ${OLLAMA_BASE_URL}`);
 });

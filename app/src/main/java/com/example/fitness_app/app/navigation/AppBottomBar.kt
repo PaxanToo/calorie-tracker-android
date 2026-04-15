@@ -27,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.fitness_app.ui.theme.GrayBorder
 
 @Composable
 fun AppBottomBar(
@@ -50,7 +51,7 @@ fun AppBottomBar(
             .height(barHeight)
     ) {
 
-        val barColor = Color.Red
+        val barColor = GrayBorder
         Canvas(
             modifier = Modifier.matchParentSize()
         ) {

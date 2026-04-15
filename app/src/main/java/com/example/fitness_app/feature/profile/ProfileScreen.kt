@@ -124,7 +124,7 @@ fun ProfileScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 20.dp),
+            .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         ProfileHeaderCard(
@@ -229,6 +229,8 @@ fun ProfileScreen(
                 Text("Удалить")
             }
         }
+        Spacer(modifier = Modifier.height(34.dp))
+
     }
 }
 
