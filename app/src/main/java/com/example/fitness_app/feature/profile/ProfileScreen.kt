@@ -132,50 +132,6 @@ fun ProfileScreen(
             calories = user.calories
         )
 
-        SectionCard(title = "Параметры пользователя") {
-            ProfileInfoRow("Пол", genderLabel(user.gender))
-            HorizontalDivider()
-            ProfileInfoRow("Возраст", user.age.label)
-            HorizontalDivider()
-            ProfileInfoRow("Рост", user.height.label)
-            HorizontalDivider()
-            ProfileInfoRow("Вес", user.weight.label)
-            HorizontalDivider()
-            ProfileInfoRow("Активность", user.activity.label)
-            HorizontalDivider()
-            ProfileInfoRow("Цель", user.goal.label)
-        }
-
-        SectionCard(title = "Дневные нормы") {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                maxItemsInEachRow = 2
-            ) {
-                NutritionTile(
-                    title = "Калории",
-                    value = "${user.calories} ккал",
-                    modifier = Modifier.weight(1f, fill = true)
-                )
-                NutritionTile(
-                    title = "Белки",
-                    value = "${user.proteins} г",
-                    modifier = Modifier.weight(1f, fill = true)
-                )
-                NutritionTile(
-                    title = "Жиры",
-                    value = "${user.fats} г",
-                    modifier = Modifier.weight(1f, fill = true)
-                )
-                NutritionTile(
-                    title = "Углеводы",
-                    value = "${user.carbs} г",
-                    modifier = Modifier.weight(1f, fill = true)
-                )
-            }
-        }
-
         SectionCard(title = "Статистика") {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -211,6 +167,50 @@ fun ProfileScreen(
             GoalCalendar(completedDays = completedDaysInCurrentMonth)
         }
 
+        SectionCard(title = "Дневные нормы") {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                maxItemsInEachRow = 2
+            ) {
+                NutritionTile(
+                    title = "Калории",
+                    value = "${user.calories} ккал",
+                    modifier = Modifier.weight(1f, fill = true)
+                )
+                NutritionTile(
+                    title = "Белки",
+                    value = "${user.proteins} г",
+                    modifier = Modifier.weight(1f, fill = true)
+                )
+                NutritionTile(
+                    title = "Жиры",
+                    value = "${user.fats} г",
+                    modifier = Modifier.weight(1f, fill = true)
+                )
+                NutritionTile(
+                    title = "Углеводы",
+                    value = "${user.carbs} г",
+                    modifier = Modifier.weight(1f, fill = true)
+                )
+            }
+        }
+
+        SectionCard(title = "Параметры пользователя") {
+            ProfileInfoRow("Пол", genderLabel(user.gender))
+            HorizontalDivider()
+            ProfileInfoRow("Возраст", user.age.label)
+            HorizontalDivider()
+            ProfileInfoRow("Рост", user.height.label)
+            HorizontalDivider()
+            ProfileInfoRow("Вес", user.weight.label)
+            HorizontalDivider()
+            ProfileInfoRow("Активность", user.activity.label)
+            HorizontalDivider()
+            ProfileInfoRow("Цель", user.goal.label)
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -229,8 +229,8 @@ fun ProfileScreen(
                 Text("Удалить")
             }
         }
-        Spacer(modifier = Modifier.height(34.dp))
 
+        Spacer(modifier = Modifier.height(34.dp))
     }
 }
 
