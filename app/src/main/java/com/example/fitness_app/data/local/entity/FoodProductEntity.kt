@@ -9,6 +9,7 @@ import androidx.room.PrimaryKey
 data class FoodProductEntity(
     @PrimaryKey val id: Int,
     val name: String,
+    val category: String,
     val kcalPer100: Int,
     val proteinPer100: Int,
     val fatPer100: Int,

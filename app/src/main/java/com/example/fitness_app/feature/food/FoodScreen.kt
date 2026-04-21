@@ -1,12 +1,14 @@
 package com.example.fitness_app.feature.food
 
 import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,12 +20,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,12 +48,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.fitness_app.MainViewModel
+import com.example.fitness_app.R
 import com.example.fitness_app.core.datastore.CalorieEntry
 import com.example.fitness_app.core.datastore.DailyProgress
 import com.example.fitness_app.core.datastore.PrefsKeys
@@ -55,18 +70,15 @@ import com.example.fitness_app.core.datastore.encodeEntries
 import com.example.fitness_app.core.datastore.prefsDataStore
 import com.example.fitness_app.data.local.entity.FoodProductEntity
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.rememberLottieComposition
-import com.example.fitness_app.R
-import kotlinx.coroutines.delay
-import androidx.compose.material3.OutlinedTextField
+
+private const val CATEGORY_ALL = "Все"
 
 @Composable
 fun FoodScreen(
@@ -80,21 +92,30 @@ fun FoodScreen(
     var showDialog by remember { mutableStateOf(false) }
     var showAchievementAnimation by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf(CATEGORY_ALL) }
+    var categoryMenuExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.ensureFoodProductsSeeded()
     }
 
     val products = viewModel.foodProducts.collectAsState().value
+
+    val categories = remember(products) {
+        listOf(CATEGORY_ALL) + products.map { it.category }.distinct()
+    }
+
     val filteredProducts = products.filter { product ->
-        product.name.contains(searchQuery.trim(), ignoreCase = true)
+        val matchesSearch = product.name.contains(searchQuery.trim(), ignoreCase = true)
+        val matchesCategory = selectedCategory == CATEGORY_ALL || product.category == selectedCategory
+        matchesSearch && matchesCategory
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 20.dp)
+                .padding(horizontal = 16.dp, vertical = 50.dp)
         ) {
             Text(
                 text = "Продукты",
@@ -111,19 +132,51 @@ fun FoodScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Поиск продукта") },
-                singleLine = true
-            )
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.weight(1f),
+                    label = { Text("Поиск продукта") },
+                    singleLine = true
+                )
+
+                Box {
+                    OutlinedButton(
+                        onClick = { categoryMenuExpanded = true },
+                        modifier = Modifier
+                            .height(56.dp)
+                            .widthIn(min = 110.dp)
+                    ) {
+                        Text(
+                            text = if (selectedCategory == CATEGORY_ALL) "Категория" else selectedCategory,
+                            maxLines = 1
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = categoryMenuExpanded,
+                        onDismissRequest = { categoryMenuExpanded = false },
+                        modifier = Modifier.wrapContentHeight()
+                    ) {
+                        categories.forEach { category ->
+                            DropdownMenuItem(
+                                text = { Text(category) },
+                                onClick = {
+                                    selectedCategory = category
+                                    categoryMenuExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
-
-
-
-
 
             if (filteredProducts.isEmpty()) {
                 Text(
@@ -133,7 +186,8 @@ fun FoodScreen(
                 )
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 135.dp)
                 ) {
                     items(filteredProducts) { product ->
                         FoodProductCard(
@@ -314,7 +368,7 @@ private fun FoodProductCard(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ProductImagePlaceholder()
+            ProductImage(product.category)
 
             Spacer(modifier = Modifier.width(14.dp))
 
@@ -329,13 +383,19 @@ private fun FoodProductCard(
                 )
 
                 Text(
+                    text = product.category,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Text(
                     text = "На 100 г",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     PortionChip(text = "${product.kcalPer100} ккал")
                     PortionChip(text = "Б ${product.proteinPer100}")
@@ -344,6 +404,34 @@ private fun FoodProductCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ProductImage(category: String) {
+    val imageRes = when (category) {
+        "Хлеб и выпечка" -> R.drawable.bread
+        "Мясо и птица" -> R.drawable.meat
+        "Рыба и морепродукты" -> R.drawable.fish
+        "Яйца и молочные продукты" -> R.drawable.milk
+        "Крупы, каши, макароны" -> R.drawable.krypi
+        "Овощи и зелень" -> R.drawable.vegetables
+        "Фрукты и ягоды" -> R.drawable.fruits
+        "Бобовые, орехи, прочее" -> R.drawable.orexi
+        else -> null
+    }
+
+    if (imageRes != null) {
+        Image(
+            painter = painterResource(id = imageRes),
+            contentDescription = category,
+            modifier = Modifier
+                .size(82.dp)
+                .clip(RoundedCornerShape(20.dp)),
+            contentScale = ContentScale.Crop
+        )
+    } else {
+        ProductImagePlaceholder()
     }
 }
 
@@ -487,6 +575,5 @@ private fun addNutritionFromProduct(
         if (!wasFirstProductAchievementUnlocked) {
             onFirstProductAchievementUnlocked()
         }
-
     }
 }
