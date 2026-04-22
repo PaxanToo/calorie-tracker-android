@@ -1,31 +1,27 @@
 package com.example.fitness_app.feature.profile
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.fitness_app.domain.model.ActivityLevel
-import com.example.fitness_app.domain.model.AgeGroup
-import com.example.fitness_app.domain.model.Gender
-import com.example.fitness_app.domain.model.Goal
-import com.example.fitness_app.domain.model.HeightGroup
-import com.example.fitness_app.domain.model.WeightGroup
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,14 +32,29 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.fitness_app.core.datastore.UserProfileData
 import com.example.fitness_app.core.datastore.saveUserProfile
 import com.example.fitness_app.core.datastore.userProfileFlow
+import com.example.fitness_app.domain.model.ActivityLevel
+import com.example.fitness_app.domain.model.AgeGroup
+import com.example.fitness_app.domain.model.Gender
+import com.example.fitness_app.domain.model.Goal
+import com.example.fitness_app.domain.model.HeightGroup
+import com.example.fitness_app.domain.model.WeightGroup
 import com.example.fitness_app.domain.nutrition.NutritionCalculator
 import kotlinx.coroutines.launch
-
-
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.remember
 
 @Composable
 fun ProfileSetupScreen(
@@ -97,16 +108,18 @@ fun ProfileSetupScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(start = 24.dp, end = 24.dp, top = 48.dp, bottom = 32.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(start = 24.dp, end = 24.dp, top = 48.dp, bottom = 44.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
             Text(
                 text = if (existingProfile == null) "Анкета профиля" else "Редактирование профиля",
-                fontSize = 26.sp
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             when (step) {
                 0 -> SelectionStep(
@@ -163,31 +176,47 @@ fun ProfileSetupScreen(
                 )
 
                 6 -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Проверьте данные", fontSize = 22.sp)
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(
+                            text = "Проверьте данные",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Text("Пол: ${genderLabel(gender)}")
-                        Text("Возраст: ${age?.label ?: "-"}")
-                        Text("Рост: ${height?.label ?: "-"}")
-                        Text("Вес: ${weight?.label ?: "-"}")
-                        Text("Активность: ${activity?.label ?: "-"}")
-                        Text("Цель: ${goal?.label ?: "-"}")
+                        SummaryRow("Пол", genderLabel(gender))
+                        SummaryRow("Возраст", age?.label ?: "-")
+                        SummaryRow("Рост", height?.label ?: "-")
+                        SummaryRow("Вес", weight?.label ?: "-")
+                        SummaryRow("Активность", activity?.label ?: "-")
+                        SummaryRow("Цель", goal?.label ?: "-")
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
                         if (calculationResult != null) {
-                            Text("Норма калорий: ${calculationResult.calories} ккал")
-                            Text("Белки: ${calculationResult.proteins} г")
-                            Text("Жиры: ${calculationResult.fats} г")
-                            Text("Углеводы: ${calculationResult.carbs} г")
+                            Text(
+                                text = "Ваши рассчитанные нормы",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            SummaryRow("Калории", "${calculationResult.calories} ккал")
+                            SummaryRow("Белки", "${calculationResult.proteins} г")
+                            SummaryRow("Жиры", "${calculationResult.fats} г")
+                            SummaryRow("Углеводы", "${calculationResult.carbs} г")
                         }
                     }
                 }
             }
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            modifier = Modifier.padding(top = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -197,7 +226,10 @@ fun ProfileSetupScreen(
                         onClick = { step-- },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Назад")
+                        Text(
+                            text = "Назад",
+                            fontSize = 18.sp
+                        )
                     }
                 }
 
@@ -235,10 +267,15 @@ fun ProfileSetupScreen(
                     if (isSaving) {
                         CircularProgressIndicator()
                     } else {
-                        Text(if (step < 6) "Далее" else "Сохранить")
+                        Text(
+                            text = if (step < 6) "Далее" else "Сохранить",
+                            fontSize = 18.sp
+                        )
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
@@ -252,23 +289,140 @@ fun <T> SelectionStep(
     onSelect: (T) -> Unit
 ) {
     Column {
-        Text(title, fontSize = 22.sp)
-        Spacer(Modifier.height(16.dp))
+        Text(
+            text = title,
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold
+        )
 
-        options.forEach { item ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            options.forEach { item ->
+                SelectionOptionCard(
+                    text = label(item),
                     selected = selected == item,
                     onClick = { onSelect(item) }
                 )
-                Spacer(Modifier.width(8.dp))
-                Text(label(item))
             }
+        }
+    }
+}
+
+@Composable
+private fun SelectionOptionCard(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val borderColor = if (selected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.45f)
+    }
+
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+
+    val interactionSource = remember { MutableInteractionSource() }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, borderColor),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (selected) 3.dp else 1.dp
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SelectionIndicator(selected = selected)
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Text(
+                text = text,
+                fontSize = 18.sp,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+private fun SelectionIndicator(selected: Boolean) {
+    val outerColor = if (selected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+    }
+
+    Box(
+        modifier = Modifier
+            .size(22.dp)
+            .background(
+                color = Color.Transparent,
+                shape = RoundedCornerShape(6.dp)
+            )
+            .border(
+                width = 2.dp,
+                color = outerColor,
+                shape = RoundedCornerShape(6.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        if (selected) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(3.dp)
+                    )
+            )
+        }
+    }
+}
+
+@Composable
+private fun SummaryRow(
+    label: String,
+    value: String
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                fontSize = 17.sp
+            )
+            Text(
+                text = value,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
