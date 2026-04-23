@@ -52,6 +52,7 @@ import com.example.fitness_app.feature.chat.presentation.model.ChatMode
 import com.example.fitness_app.feature.chat.presentation.model.NutritionGoalUi
 import com.example.fitness_app.feature.chat.ui.components.ChatInputBar
 import com.example.fitness_app.feature.chat.ui.components.ChatMessageBubble
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun ChatContent(
@@ -217,79 +218,97 @@ fun ChatContent(
             horizontalAlignment = Alignment.End
         ) {
             AnimatedVisibility(visible = modeMenuExpanded) {
-                Column(
-                    horizontalAlignment = Alignment.End
+                Card(
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Black.copy(alpha = 0.9f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    AssistChip(
-                        onClick = {
-                            onModeSelected(ChatMode.MEAL_CALORIES)
-                            modeMenuExpanded = false
-                            goalMenuExpanded = false
-                        },
-                        label = { Text("Узнать калории") }
-                    )
+                    Column(
+                        modifier = Modifier.padding(10.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        AssistChip(
+                            onClick = {
+                                onModeSelected(ChatMode.MEAL_CALORIES)
+                                modeMenuExpanded = false
+                                goalMenuExpanded = false
+                            },
+                            label = { Text("Узнать калории") }
+                        )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    AssistChip(
-                        onClick = {
-                            onModeSelected(ChatMode.DISH_SUGGESTION)
-                            modeMenuExpanded = false
-                            goalMenuExpanded = true
-                        },
-                        label = { Text("Подобрать блюдо") }
-                    )
+                        AssistChip(
+                            onClick = {
+                                onModeSelected(ChatMode.DISH_SUGGESTION)
+                                modeMenuExpanded = false
+                                goalMenuExpanded = true
+                            },
+                            label = { Text("Подобрать блюдо") }
+                        )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    AssistChip(
-                        onClick = {
-                            onModeSelected(ChatMode.DEFAULT)
-                            modeMenuExpanded = false
-                            goalMenuExpanded = false
-                        },
-                        label = { Text("Сбросить режим") }
-                    )
+                        AssistChip(
+                            onClick = {
+                                onModeSelected(ChatMode.DEFAULT)
+                                modeMenuExpanded = false
+                                goalMenuExpanded = false
+                            },
+                            label = { Text("Сбросить режим") }
+                        )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
                 }
             }
 
             AnimatedVisibility(
                 visible = goalMenuExpanded && uiState.selectedMode == ChatMode.DISH_SUGGESTION
             ) {
-                Column(
-                    horizontalAlignment = Alignment.End
+                Card(
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Black.copy(alpha = 0.9f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    AssistChip(
-                        onClick = {
-                            onGoalSelected(NutritionGoalUi.LOSE_WEIGHT)
-                            goalMenuExpanded = false
-                        },
-                        label = { Text("Похудение") }
-                    )
+                    Column(
+                        modifier = Modifier.padding(10.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        AssistChip(
+                            onClick = {
+                                onGoalSelected(NutritionGoalUi.LOSE_WEIGHT)
+                                goalMenuExpanded = false
+                            },
+                            label = { Text("Похудение") }
+                        )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    AssistChip(
-                        onClick = {
-                            onGoalSelected(NutritionGoalUi.MAINTAIN_WEIGHT)
-                            goalMenuExpanded = false
-                        },
-                        label = { Text("Поддержание") }
-                    )
+                        AssistChip(
+                            onClick = {
+                                onGoalSelected(NutritionGoalUi.MAINTAIN_WEIGHT)
+                                goalMenuExpanded = false
+                            },
+                            label = { Text("Поддержание") }
+                        )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    AssistChip(
-                        onClick = {
-                            onGoalSelected(NutritionGoalUi.GAIN_WEIGHT)
-                            goalMenuExpanded = false
-                        },
-                        label = { Text("Набор массы") }
-                    )
+                        AssistChip(
+                            onClick = {
+                                onGoalSelected(NutritionGoalUi.GAIN_WEIGHT)
+                                goalMenuExpanded = false
+                            },
+                            label = { Text("Набор массы") }
+                        )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
                 }
             }
 
