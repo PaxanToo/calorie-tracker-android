@@ -56,7 +56,34 @@ object PrefsKeys {
     val ACH_TOTAL_GOAL_COMPLETIONS = intPreferencesKey("ach_total_goal_completions")
     val ACH_FIRST_PRODUCT_ADDED = booleanPreferencesKey("ach_first_product_added")
     val ACH_AI_MEAL_ADDED = booleanPreferencesKey("ach_ai_meal_added")
+    val CHAT_HISTORY = stringPreferencesKey("chat_history")
 }
+
+fun Context.chatHistoryFlow(): Flow<List<SavedChatMessage>> {
+    return dataStore.data.map { preferences ->
+        decodeChatHistory(
+            preferences[PrefsKeys.CHAT_HISTORY] ?: ""
+        )
+    }
+}
+
+suspend fun Context.saveChatHistory(messages: List<SavedChatMessage>) {
+    dataStore.edit { preferences ->
+        preferences[PrefsKeys.CHAT_HISTORY] = encodeChatHistory(
+            messages.takeLast(30)
+        )
+    }
+}
+
+suspend fun Context.clearChatHistory() {
+    dataStore.edit { preferences ->
+        preferences.remove(PrefsKeys.CHAT_HISTORY)
+    }
+}
+
+
+
+
 
 fun Context.prefsDataStore() = dataStore
 

@@ -7,11 +7,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.fitness_app.core.datastore.CalorieEntry
 import com.example.fitness_app.core.datastore.DailyProgress
 import com.example.fitness_app.core.datastore.PrefsKeys
+import com.example.fitness_app.core.datastore.SavedChatMessage
+import com.example.fitness_app.core.datastore.chatHistoryFlow
 import com.example.fitness_app.core.datastore.decodeDailyProgressList
 import com.example.fitness_app.core.datastore.decodeEntries
 import com.example.fitness_app.core.datastore.encodeDailyProgressList
 import com.example.fitness_app.core.datastore.encodeEntries
 import com.example.fitness_app.core.datastore.prefsDataStore
+import com.example.fitness_app.core.datastore.saveChatHistory
 import com.example.fitness_app.domain.chat.model.ChatModeDomain
 import com.example.fitness_app.domain.chat.model.ChatRequest
 import com.example.fitness_app.domain.chat.model.NutritionGoalDomain
@@ -36,21 +39,28 @@ class ChatViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
+    private val context = getApplication<Application>()
+
     private val sendChatMessageUseCase =
         ProxyChatFeatureProvider.provideSendChatMessageUseCase(application)
 
+    private val welcomeMessage = ChatMessageUi(
+        id = System.currentTimeMillis(),
+        text = "Привет! Я помогу посчитать калории блюда или предложить, что приготовить.",
+        isFromUser = false
+    )
+
     private val _uiState = MutableStateFlow(
         ChatUiState(
-            messages = listOf(
-                ChatMessageUi(
-                    id = System.currentTimeMillis(),
-                    text = "Привет! Я помогу посчитать калории блюда или предложить, что приготовить.",
-                    isFromUser = false
-                )
-            )
+            messages = listOf(welcomeMessage)
         )
     )
+
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
+
+    init {
+        loadChatHistory()
+    }
 
     fun onAction(action: ChatAction) {
         when (action) {
@@ -106,6 +116,40 @@ class ChatViewModel(
         }
     }
 
+    private fun loadChatHistory() {
+        viewModelScope.launch {
+            val savedMessages = context.chatHistoryFlow().first()
+
+            if (savedMessages.isNotEmpty()) {
+                _uiState.value = _uiState.value.copy(
+                    messages = savedMessages.map { savedMessage ->
+                        ChatMessageUi(
+                            id = savedMessage.time,
+                            text = savedMessage.text,
+                            isFromUser = savedMessage.isUser
+                        )
+                    }
+                )
+            }
+        }
+    }
+
+    private fun saveCurrentChatHistory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val messagesToSave = _uiState.value.messages
+                .takeLast(30)
+                .map { message ->
+                    SavedChatMessage(
+                        text = message.text,
+                        isUser = message.isFromUser,
+                        time = message.id
+                    )
+                }
+
+            context.saveChatHistory(messagesToSave)
+        }
+    }
+
     private fun sendMessage() {
         val currentState = _uiState.value
         val messageText = currentState.inputText.trim()
@@ -125,11 +169,13 @@ class ChatViewModel(
         )
 
         _uiState.value = currentState.copy(
-            messages = currentState.messages + userMessage,
+            messages = (currentState.messages + userMessage).takeLast(30),
             inputText = "",
             isLoading = true,
             errorMessage = null
         )
+
+        saveCurrentChatHistory()
 
         val request = ChatRequest(
             message = messageText,
@@ -159,18 +205,22 @@ class ChatViewModel(
                 )
 
                 _uiState.value = _uiState.value.copy(
-                    messages = _uiState.value.messages + aiMessage,
+                    messages = (_uiState.value.messages + aiMessage).takeLast(30),
                     isLoading = false,
                     selectedImageUri = null
                 )
+
+                saveCurrentChatHistory()
             }.onFailure { throwable ->
-                android.util.Log.e("GigaChat", "sendMessage failed", throwable)
+                android.util.Log.e("LocalAI", "sendMessage failed", throwable)
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = throwable.message
                         ?: "Не удалось получить ответ. Попробуйте снова."
                 )
+
+                saveCurrentChatHistory()
             }
         }
     }
@@ -223,6 +273,7 @@ class ChatViewModel(
             )
 
             val existingIndex = history.indexOfFirst { it.date == today }
+
             if (existingIndex >= 0) {
                 history[existingIndex] = updatedItem
             } else {
@@ -250,9 +301,11 @@ class ChatViewModel(
             }
 
             _uiState.value = _uiState.value.copy(
-                messages = updatedMessages,
+                messages = updatedMessages.takeLast(30),
                 showAchievementAnimation = !wasAiAchievementUnlocked
             )
+
+            saveCurrentChatHistory()
         }
     }
 
