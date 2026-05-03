@@ -4,10 +4,10 @@ import com.example.fitness_app.domain.chat.model.ChatRequest
 import com.example.fitness_app.domain.chat.model.ChatResponse
 import com.example.fitness_app.domain.chat.repository.ChatRepository
 
-class GigaChatChatRepository(
+class DELETGigaChatChatRepository(
     private val authorizationKey: String,
-    private val authApi: GigaChatAuthApi,
-    private val chatApi: GigaChatChatApi
+    private val authApi: DELETGigaChatAuthApi,
+    private val chatApi: DELETGigaChatChatApi
 ) : ChatRepository {
 
     override suspend fun sendMessage(request: ChatRequest): ChatResponse {

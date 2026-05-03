@@ -7,7 +7,7 @@ import com.example.fitness_app.domain.chat.model.NutritionGoalDomain
 import com.example.fitness_app.domain.chat.repository.ChatRepository
 import kotlinx.coroutines.delay
 
-class FakeChatRepository : ChatRepository {
+class DELETFakeChatRepository : ChatRepository {
 
     override suspend fun sendMessage(request: ChatRequest): ChatResponse {
         delay(1200)

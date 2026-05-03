@@ -6,7 +6,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.UUID
 
-class GigaChatAuthApi(
+class DELETGigaChatAuthApi(
     private val client: OkHttpClient,
     private val gson: com.google.gson.Gson
 ) {

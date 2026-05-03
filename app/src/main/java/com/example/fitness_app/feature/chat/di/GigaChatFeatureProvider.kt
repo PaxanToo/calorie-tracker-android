@@ -1,8 +1,8 @@
 package com.example.fitness_app.feature.chat.di
 
-import com.example.fitness_app.data.ai.gigachat.GigaChatAuthApi
-import com.example.fitness_app.data.ai.gigachat.GigaChatChatApi
-import com.example.fitness_app.data.ai.gigachat.GigaChatChatRepository
+import com.example.fitness_app.data.ai.gigachat.DELETGigaChatAuthApi
+import com.example.fitness_app.data.ai.gigachat.DELETGigaChatChatApi
+import com.example.fitness_app.data.ai.gigachat.DELETGigaChatChatRepository
 import com.example.fitness_app.domain.chat.usecase.SendChatMessageUseCase
 import com.google.gson.Gson
 import okhttp3.OkHttpClient
@@ -15,17 +15,17 @@ object GigaChatFeatureProvider {
 
     private val client = OkHttpClient.Builder().build()
 
-    private val authApi = GigaChatAuthApi(
+    private val authApi = DELETGigaChatAuthApi(
         client = client,
         gson = gson
     )
 
-    private val chatApi = GigaChatChatApi(
+    private val chatApi = DELETGigaChatChatApi(
         client = client,
         gson = gson
     )
 
-    private val repository = GigaChatChatRepository(
+    private val repository = DELETGigaChatChatRepository(
         authorizationKey = AUTHORIZATION_KEY,
         authApi = authApi,
         chatApi = chatApi

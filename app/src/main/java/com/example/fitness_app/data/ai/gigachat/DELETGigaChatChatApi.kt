@@ -5,7 +5,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
-class GigaChatChatApi(
+class DELETGigaChatChatApi(
     private val client: OkHttpClient,
     private val gson: com.google.gson.Gson
 ) {
