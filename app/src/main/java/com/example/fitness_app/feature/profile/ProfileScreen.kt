@@ -167,7 +167,7 @@ fun ProfileScreen(
             GoalCalendar(completedDays = completedDaysInCurrentMonth)
         }
 
-        SectionCard(title = "Дневные нормы") {
+        SectionCard(title = "Рекомендуемые дневные нормы") {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),

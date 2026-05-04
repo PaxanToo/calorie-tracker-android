@@ -57,6 +57,9 @@ object PrefsKeys {
     val ACH_FIRST_PRODUCT_ADDED = booleanPreferencesKey("ach_first_product_added")
     val ACH_AI_MEAL_ADDED = booleanPreferencesKey("ach_ai_meal_added")
     val CHAT_HISTORY = stringPreferencesKey("chat_history")
+    val PROTEIN_GOAL = intPreferencesKey("protein_goal")
+    val FAT_GOAL = intPreferencesKey("fat_goal")
+    val CARBS_GOAL = intPreferencesKey("carbs_goal")
 }
 
 fun Context.chatHistoryFlow(): Flow<List<SavedChatMessage>> {

@@ -492,7 +492,7 @@ private fun PortionButton(
         modifier = modifier
     ) {
         Text(
-            text = "${grams}г\n${kcal} ккал",
+            text = "${grams}г",
             style = LocalTextStyle.current
         )
     }

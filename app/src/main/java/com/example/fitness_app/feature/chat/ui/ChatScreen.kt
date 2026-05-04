@@ -7,16 +7,27 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fitness_app.feature.chat.presentation.ChatAction
@@ -32,6 +43,7 @@ fun ChatScreen(
     val context = LocalContext.current
     val viewModel: ChatViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
+
     LaunchedEffect(uiState.showAchievementAnimation) {
         if (uiState.showAchievementAnimation) {
             delay(1800)
@@ -85,10 +97,32 @@ fun ChatScreen(
     if (showImageSourceDialog) {
         AlertDialog(
             onDismissRequest = { showImageSourceDialog = false },
-            title = { Text("Выберите источник") },
-            text = { Text("Откуда взять изображение?") },
+            title = {
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Выберите источник")
+
+                    IconButton(
+                        onClick = {
+                            showImageSourceDialog = false
+                        },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = 8.dp, y = (-24).dp)
+                    ) {
+                        Text(
+                            text = "×",
+                            fontSize = 24.sp
+                        )
+                    }
+                }
+            },
+            text = {
+                Text("Откуда взять изображение?")
+            },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         showImageSourceDialog = false
                         pickImageLauncher.launch(
@@ -96,31 +130,31 @@ fun ChatScreen(
                                 ActivityResultContracts.PickVisualMedia.ImageOnly
                             )
                         )
-                    }
+                    },
+                    modifier = Modifier.offset(x = (-12).dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFB6FF00),
+                        contentColor = Color.Black
+                    )
                 ) {
-                    Text("Галерея")
+                    Text("Галерея",  color = Color.Black)
                 }
             },
             dismissButton = {
-                Row {
-                    TextButton(
-                        onClick = {
-                            showImageSourceDialog = false
-                            val uri = createTempImageUri(context)
-                            tempCameraImageUri = uri
-                            takePictureLauncher.launch(uri)
-                        }
-                    ) {
-                        Text("Камера")
-                    }
-
-                    TextButton(
-                        onClick = {
-                            showImageSourceDialog = false
-                        }
-                    ) {
-                        Text("Отмена")
-                    }
+                Button(
+                    onClick = {
+                        showImageSourceDialog = false
+                        val uri = createTempImageUri(context)
+                        tempCameraImageUri = uri
+                        takePictureLauncher.launch(uri)
+                    },
+                    modifier = Modifier.offset(x = (-60).dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFB6FF00),
+                        contentColor = Color.Black,
+                    )
+                ) {
+                    Text("Камера",  color = Color.Black)
                 }
             }
         )

@@ -9,8 +9,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -30,7 +32,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.datastore.preferences.core.edit
-import com.airbnb.lottie.compose.*
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.fitness_app.R
 import com.example.fitness_app.core.datastore.CalorieEntry
 import com.example.fitness_app.core.datastore.DailyProgress
@@ -40,7 +44,6 @@ import com.example.fitness_app.core.datastore.decodeEntries
 import com.example.fitness_app.core.datastore.encodeDailyProgressList
 import com.example.fitness_app.core.datastore.encodeEntries
 import com.example.fitness_app.core.datastore.prefsDataStore
-import com.example.fitness_app.core.datastore.saveUserProfile
 import com.example.fitness_app.core.datastore.userProfileFlow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -49,8 +52,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
-import androidx.compose.foundation.clickable
-
 
 @Composable
 fun CircularProgressBar(
@@ -104,8 +105,6 @@ fun HomeScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var showResetDialog by remember { mutableStateOf(false) }
-
     val profile by context.userProfileFlow().collectAsState(initial = null)
 
     val timeFormatter = remember {
@@ -114,9 +113,14 @@ fun HomeScreen() {
 
     var goal by remember { mutableStateOf(2200) }
     var eaten by remember { mutableStateOf(0) }
+
     var proteinEaten by remember { mutableStateOf(0) }
     var fatEaten by remember { mutableStateOf(0) }
     var carbsEaten by remember { mutableStateOf(0) }
+
+    var proteinGoal by remember { mutableStateOf(0) }
+    var fatGoal by remember { mutableStateOf(0) }
+    var carbsGoal by remember { mutableStateOf(0) }
 
     var showAchievement by remember { mutableStateOf(false) }
     var achievementShown by remember { mutableStateOf(false) }
@@ -124,6 +128,7 @@ fun HomeScreen() {
 
     var showAddDialog by remember { mutableStateOf(false) }
     var showGoalDialog by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
 
     var isFabOpen by remember { mutableStateOf(false) }
 
@@ -136,6 +141,7 @@ fun HomeScreen() {
     val entries = remember { mutableStateListOf<CalorieEntry>() }
 
     LaunchedEffect(profile) {
+        if (profile == null) return@LaunchedEffect
         val today = LocalDate.now().toString()
 
         context.prefsDataStore().edit { prefs ->
@@ -162,9 +168,15 @@ fun HomeScreen() {
 
         goal = prefs[PrefsKeys.CAL_GOAL] ?: profile?.calories ?: 2200
         eaten = prefs[PrefsKeys.CAL_EATEN] ?: 0
+
         proteinEaten = prefs[PrefsKeys.PROTEIN_EATEN] ?: 0
         fatEaten = prefs[PrefsKeys.FAT_EATEN] ?: 0
         carbsEaten = prefs[PrefsKeys.CARBS_EATEN] ?: 0
+
+        proteinGoal = prefs[PrefsKeys.PROTEIN_GOAL] ?: profile?.proteins ?: 0
+        fatGoal = prefs[PrefsKeys.FAT_GOAL] ?: profile?.fats ?: 0
+        carbsGoal = prefs[PrefsKeys.CARBS_GOAL] ?: profile?.carbs ?: 0
+
         achievementShown = prefs[PrefsKeys.ACH_GOAL_REACHED] ?: false
 
         val totalCompletions = prefs[PrefsKeys.ACH_TOTAL_GOAL_COMPLETIONS] ?: 0
@@ -209,6 +221,7 @@ fun HomeScreen() {
             }
 
             showAchievement = true
+
             unlockedMilestone?.let {
                 shownGoalCompletionMilestone = it
             }
@@ -270,7 +283,9 @@ fun HomeScreen() {
                             .offset((-75).dp * fabProgress, (45).dp * fabProgress)
                             .scale(0.7f + 0.3f * fabProgress)
                             .alpha(fabProgress)
-                    ) { Text("+") }
+                    ) {
+                        Text("+")
+                    }
                 }
 
                 if (fabProgress > 0f) {
@@ -285,7 +300,9 @@ fun HomeScreen() {
                             .offset(0.dp, (45).dp * fabProgress)
                             .scale(0.7f + 0.3f * fabProgress)
                             .alpha(fabProgress)
-                    ) { Text("🎯") }
+                    ) {
+                        Text("🎯")
+                    }
                 }
 
                 if (fabProgress > 0f) {
@@ -301,7 +318,9 @@ fun HomeScreen() {
                             .scale(0.7f + 0.3f * fabProgress)
                             .alpha(fabProgress),
                         containerColor = Color.Red
-                    ) { Text("⟳") }
+                    ) {
+                        Text("⟳")
+                    }
                 }
             }
 
@@ -315,6 +334,7 @@ fun HomeScreen() {
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Добавленные калории", fontWeight = FontWeight.Bold)
+
                     Spacer(modifier = Modifier.height(8.dp))
 
                     if (entries.isEmpty()) {
@@ -341,9 +361,9 @@ fun HomeScreen() {
                 proteins = proteinEaten,
                 fats = fatEaten,
                 carbs = carbsEaten,
-                proteinGoal = profile?.proteins ?: 0,
-                fatGoal = profile?.fats ?: 0,
-                carbsGoal = profile?.carbs ?: 0
+                proteinGoal = proteinGoal,
+                fatGoal = fatGoal,
+                carbsGoal = carbsGoal
             )
         }
 
@@ -361,8 +381,8 @@ fun HomeScreen() {
                     entries.add(
                         0,
                         CalorieEntry(
-                            calories,
-                            LocalTime.now().format(timeFormatter)
+                            calories = calories,
+                            time = LocalTime.now().format(timeFormatter)
                         )
                     )
 
@@ -388,6 +408,7 @@ fun HomeScreen() {
                             )
 
                             val existingIndex = history.indexOfFirst { it.date == today }
+
                             if (existingIndex >= 0) {
                                 history[existingIndex] = updatedItem
                             } else {
@@ -407,19 +428,25 @@ fun HomeScreen() {
                 title = "Новая цель",
                 quickValues = listOf(1700, 2200, 2800),
                 initialCalories = goal,
-                initialProteins = profile?.proteins ?: 0,
-                initialFats = profile?.fats ?: 0,
-                initialCarbs = profile?.carbs ?: 0,
+                initialProteins = proteinGoal,
+                initialFats = fatGoal,
+                initialCarbs = carbsGoal,
                 onDismiss = { showGoalDialog = false },
-                onConfirm = { caloriesGoal, proteinsGoal, fatsGoal, carbsGoal ->
+                onConfirm = { caloriesGoal, proteinsGoal, fatsGoal, carbsGoalValue ->
                     goal = caloriesGoal
+                    proteinGoal = proteinsGoal
+                    fatGoal = fatsGoal
+                    carbsGoal = carbsGoalValue
                     achievementShown = false
 
                     scope.launch {
                         val today = LocalDate.now().toString()
 
                         context.prefsDataStore().edit { prefs ->
-                            prefs[PrefsKeys.CAL_GOAL] = goal
+                            prefs[PrefsKeys.CAL_GOAL] = caloriesGoal
+                            prefs[PrefsKeys.PROTEIN_GOAL] = proteinsGoal
+                            prefs[PrefsKeys.FAT_GOAL] = fatsGoal
+                            prefs[PrefsKeys.CARBS_GOAL] = carbsGoalValue
 
                             val history = decodeDailyProgressList(
                                 prefs[PrefsKeys.DAILY_PROGRESS_HISTORY] ?: ""
@@ -428,11 +455,12 @@ fun HomeScreen() {
                             val updatedItem = DailyProgress(
                                 date = today,
                                 eatenCalories = eaten,
-                                goalCalories = goal,
-                                goalReached = eaten >= goal
+                                goalCalories = caloriesGoal,
+                                goalReached = eaten >= caloriesGoal
                             )
 
                             val existingIndex = history.indexOfFirst { it.date == today }
+
                             if (existingIndex >= 0) {
                                 history[existingIndex] = updatedItem
                             } else {
@@ -441,17 +469,6 @@ fun HomeScreen() {
 
                             prefs[PrefsKeys.DAILY_PROGRESS_HISTORY] =
                                 encodeDailyProgressList(history.sortedBy { it.date })
-                        }
-
-                        profile?.let { currentProfile ->
-                            context.saveUserProfile(
-                                currentProfile.copy(
-                                    calories = caloriesGoal,
-                                    proteins = proteinsGoal,
-                                    fats = fatsGoal,
-                                    carbs = carbsGoal
-                                )
-                            )
                         }
                     }
                 }
@@ -464,7 +481,7 @@ fun HomeScreen() {
             )
 
             LottieAnimation(
-                composition,
+                composition = composition,
                 iterations = 1,
                 modifier = Modifier.size(250.dp)
             )
@@ -510,6 +527,7 @@ fun HomeScreen() {
                                 )
 
                                 val existingIndex = history.indexOfFirst { it.date == today }
+
                                 if (existingIndex >= 0) {
                                     history[existingIndex] = updatedItem
                                 } else {
@@ -547,18 +565,27 @@ fun AddNutritionDialog(
     var carbs by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
 
+    val scrollState = rememberScrollState()
+
     fun parseInt(value: String): Int = value.toIntOrNull() ?: 0
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 340.dp)
+                    .verticalScroll(scrollState)
+                    .padding(bottom = 8.dp)
+            ) {
                 OutlinedTextField(
                     value = calories,
                     onValueChange = { calories = it },
                     label = { Text("Калории") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -617,6 +644,7 @@ fun AddNutritionDialog(
                         onValueChange = { proteins = it },
                         label = { Text("Белки") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -627,6 +655,7 @@ fun AddNutritionDialog(
                         onValueChange = { fats = it },
                         label = { Text("Жиры") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -637,6 +666,7 @@ fun AddNutritionDialog(
                         onValueChange = { carbs = it },
                         label = { Text("Углеводы") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -683,18 +713,27 @@ fun GoalInputDialog(
     var carbs by remember { mutableStateOf(initialCarbs.toString()) }
     var expanded by remember { mutableStateOf(false) }
 
+    val scrollState = rememberScrollState()
+
     fun parseGoal(value: String, fallback: Int): Int = value.toIntOrNull() ?: fallback
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 340.dp)
+                    .verticalScroll(scrollState)
+                    .padding(bottom = 8.dp)
+            ) {
                 OutlinedTextField(
                     value = calories,
                     onValueChange = { calories = it },
                     label = { Text("Цель по калориям") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -753,6 +792,7 @@ fun GoalInputDialog(
                         onValueChange = { proteins = it },
                         label = { Text("Цель по белкам") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -763,6 +803,7 @@ fun GoalInputDialog(
                         onValueChange = { fats = it },
                         label = { Text("Цель по жирам") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -773,6 +814,7 @@ fun GoalInputDialog(
                         onValueChange = { carbs = it },
                         label = { Text("Цель по углеводам") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -872,6 +914,7 @@ private fun NutritionProgressRow(
                 text = title,
                 fontWeight = FontWeight.Medium
             )
+
             Text(
                 text = "$value / $goal г",
                 color = Color.Gray

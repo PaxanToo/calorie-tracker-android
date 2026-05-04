@@ -7,6 +7,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -35,6 +39,8 @@ fun AppNavGraph(
         .map<Boolean, Boolean?> { it }
         .collectAsState(initial = null)
 
+    var homeRefreshKey by remember { mutableIntStateOf(0) }
+
     if (hasProfile == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -56,7 +62,9 @@ fun AppNavGraph(
         startDestination = startDestination
     ) {
         composable(HomeDestination.route) {
-            HomeScreen()
+            key(homeRefreshKey) {
+                HomeScreen()
+            }
         }
 
         composable(ProfileDestination.route) {
@@ -65,10 +73,13 @@ fun AppNavGraph(
                     navHostController.navigate(PROFILE_SETUP_ROUTE)
                 },
                 onProfileDeleted = {
+                    homeRefreshKey++
+
                     navHostController.navigate(PROFILE_SETUP_ROUTE) {
                         popUpTo(ProfileDestination.route) {
                             inclusive = true
                         }
+                        launchSingleTop = true
                     }
                 }
             )
@@ -77,6 +88,8 @@ fun AppNavGraph(
         composable(PROFILE_SETUP_ROUTE) {
             ProfileSetupScreen(
                 onSaved = {
+                    homeRefreshKey++
+
                     if (hasProfile == true) {
                         navHostController.popBackStack()
                     } else {
@@ -84,6 +97,7 @@ fun AppNavGraph(
                             popUpTo(PROFILE_SETUP_ROUTE) {
                                 inclusive = true
                             }
+                            launchSingleTop = true
                         }
                     }
                 }
