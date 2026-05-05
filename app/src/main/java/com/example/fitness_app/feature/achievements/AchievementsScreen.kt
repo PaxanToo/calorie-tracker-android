@@ -1,5 +1,6 @@
 package com.example.fitness_app.feature.achievements
 
+import androidx.annotation.RawRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,7 +38,8 @@ import com.example.fitness_app.core.datastore.prefsDataStore
 private data class AchievementUi(
     val title: String,
     val description: String,
-    val unlocked: Boolean
+    val unlocked: Boolean,
+    @RawRes val animationResId: Int
 )
 
 @Composable
@@ -58,8 +60,6 @@ fun AchievementsScreen() {
                 text = "Достижения",
                 style = MaterialTheme.typography.headlineSmall
             )
-
-            Spacer(modifier = Modifier.width(8.dp))
         }
 
         items(achievements) { achievement ->
@@ -91,8 +91,9 @@ private fun AchievementCard(
         ) {
             if (achievement.unlocked) {
                 val composition by rememberLottieComposition(
-                    LottieCompositionSpec.RawRes(R.raw.lottie)
+                    LottieCompositionSpec.RawRes(achievement.animationResId)
                 )
+
                 val progress by animateLottieCompositionAsState(
                     composition = composition,
                     iterations = LottieConstants.IterateForever
@@ -146,27 +147,32 @@ private fun buildAchievements(prefs: Preferences?): List<AchievementUi> {
         AchievementUi(
             title = "Первый шаг",
             description = "Выполнить дневную цель 1 раз",
-            unlocked = totalGoalCompletions >= 1
+            unlocked = totalGoalCompletions >= 1,
+            animationResId = R.raw.achievement_goal_1
         ),
         AchievementUi(
-            title = "На правильном пути",
+            title = "На пути к успеху",
             description = "Выполнить дневную цель 3 раза",
-            unlocked = totalGoalCompletions >= 3
+            unlocked = totalGoalCompletions >= 3,
+            animationResId = R.raw.achievement_goal_3
         ),
         AchievementUi(
-            title = "Стабильность",
+            title = "7 раз поешь 7 раз отметь",
             description = "Выполнить дневную цель 7 раз",
-            unlocked = totalGoalCompletions >= 7
+            unlocked = totalGoalCompletions >= 7,
+            animationResId = R.raw.achievement_goal_7
         ),
         AchievementUi(
             title = "Первый продукт",
             description = "Добавить еду через экран продуктов",
-            unlocked = firstProductAdded
+            unlocked = firstProductAdded,
+            animationResId = R.raw.achievement_first_product
         ),
         AchievementUi(
-            title = "AI-помощник",
+            title = "Вот он какой - AI-помощник",
             description = "Добавить блюдо в дневник из AI-чата",
-            unlocked = aiMealAdded
+            unlocked = aiMealAdded,
+            animationResId = R.raw.achievement_ai_meal
         )
     )
 }

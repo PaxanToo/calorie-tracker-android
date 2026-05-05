@@ -477,7 +477,7 @@ fun HomeScreen() {
 
         if (showAchievement) {
             val composition by rememberLottieComposition(
-                LottieCompositionSpec.RawRes(R.raw.lottie)
+                LottieCompositionSpec.RawRes(R.raw.achievement_goal_7)
             )
 
             LottieAnimation(
