@@ -203,7 +203,7 @@ fun FoodScreen(
 
         if (showAchievementAnimation) {
             val composition by rememberLottieComposition(
-                LottieCompositionSpec.RawRes(R.raw.achievement_goal_7)
+                LottieCompositionSpec.RawRes(R.raw.achievement_first_product)
             )
 
             LottieAnimation(

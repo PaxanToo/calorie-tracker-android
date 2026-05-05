@@ -53,6 +53,10 @@ import com.example.fitness_app.feature.chat.presentation.model.NutritionGoalUi
 import com.example.fitness_app.feature.chat.ui.components.ChatInputBar
 import com.example.fitness_app.feature.chat.ui.components.ChatMessageBubble
 import androidx.compose.ui.graphics.Color
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.example.fitness_app.R
 
 @Composable
 fun ChatContent(
@@ -325,6 +329,19 @@ fun ChatContent(
                     modifier = Modifier.rotate(rotation)
                 )
             }
+        }
+        if (uiState.showAchievementAnimation) {
+            val composition by rememberLottieComposition(
+                LottieCompositionSpec.RawRes(R.raw.achievement_ai_meal)
+            )
+
+            LottieAnimation(
+                composition = composition,
+                iterations = 1,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(240.dp)
+            )
         }
     }
 }

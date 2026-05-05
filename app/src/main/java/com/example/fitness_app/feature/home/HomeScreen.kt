@@ -125,6 +125,7 @@ fun HomeScreen() {
     var showAchievement by remember { mutableStateOf(false) }
     var achievementShown by remember { mutableStateOf(false) }
     var shownGoalCompletionMilestone by remember { mutableStateOf<Int?>(null) }
+    var achievementAnimationResId by remember { mutableIntStateOf(R.raw.achievement_goal_1) }
 
     var showAddDialog by remember { mutableStateOf(false) }
     var showGoalDialog by remember { mutableStateOf(false) }
@@ -218,6 +219,12 @@ fun HomeScreen() {
                         else -> null
                     }
                 }
+            }
+
+            achievementAnimationResId = when (unlockedMilestone) {
+                7 -> R.raw.achievement_goal_7
+                3 -> R.raw.achievement_goal_3
+                else -> R.raw.achievement_goal_1
             }
 
             showAchievement = true
@@ -477,7 +484,7 @@ fun HomeScreen() {
 
         if (showAchievement) {
             val composition by rememberLottieComposition(
-                LottieCompositionSpec.RawRes(R.raw.achievement_goal_7)
+                LottieCompositionSpec.RawRes(achievementAnimationResId)
             )
 
             LottieAnimation(
