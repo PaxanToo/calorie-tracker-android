@@ -21,6 +21,86 @@ const PORT = process.env.PORT || 3000;
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen3.5:4b";
 
+/* ---------------- AI QUEUE ---------------- */
+
+const MAX_QUEUE_SIZE = Number(process.env.MAX_QUEUE_SIZE || 10);
+
+const aiQueue = [];
+let isAiProcessing = false;
+
+function getErrorMessage(error) {
+  if (error.response?.data) {
+    if (typeof error.response.data === "string") {
+      return error.response.data;
+    }
+
+    return JSON.stringify(error.response.data);
+  }
+
+  return error.message || "Unknown server error";
+}
+
+function enqueueAiTask(task, res, label) {
+  if (aiQueue.length >= MAX_QUEUE_SIZE) {
+    return res.status(429).json({
+      success: false,
+      error: "AI сейчас занят. Попробуйте немного позже.",
+      queueLength: aiQueue.length,
+    });
+  }
+
+  aiQueue.push({
+    task,
+    res,
+    label,
+    createdAt: Date.now(),
+  });
+
+  console.log(`[QUEUE] Added ${label}. Queue length: ${aiQueue.length}`);
+
+  processAiQueue();
+}
+
+async function processAiQueue() {
+  if (isAiProcessing) return;
+
+  const item = aiQueue.shift();
+  if (!item) return;
+
+  isAiProcessing = true;
+
+  const waitTimeMs = Date.now() - item.createdAt;
+
+  console.log(
+    `[QUEUE] Processing ${item.label}. Waited: ${waitTimeMs}ms. Remaining: ${aiQueue.length}`
+  );
+
+  try {
+    const result = await item.task();
+
+    if (!item.res.headersSent) {
+      item.res.json(result);
+    }
+  } catch (error) {
+    console.error(`[QUEUE] ${item.label} failed:`, getErrorMessage(error));
+
+    if (!item.res.headersSent) {
+      item.res.status(500).json({
+        success: false,
+        error: getErrorMessage(error),
+      });
+    }
+  } finally {
+    isAiProcessing = false;
+
+    console.log(`[QUEUE] Finished ${item.label}. Remaining: ${aiQueue.length}`);
+
+    setImmediate(processAiQueue);
+  }
+}
+
+/* ---------------- HEALTH ---------------- */
+
 app.get("/health", async (req, res) => {
   try {
     const response = await axios.get(`${OLLAMA_BASE_URL}/api/tags`, {
@@ -33,6 +113,9 @@ app.get("/health", async (req, res) => {
       model: OLLAMA_MODEL,
       ollamaReachable: true,
       modelsCount: response.data?.models?.length || 0,
+      queueLength: aiQueue.length,
+      aiBusy: isAiProcessing,
+      maxQueueSize: MAX_QUEUE_SIZE,
     });
   } catch (error) {
     res.status(500).json({
@@ -40,10 +123,15 @@ app.get("/health", async (req, res) => {
       message: "ollama proxy is running, but Ollama is unavailable",
       model: OLLAMA_MODEL,
       ollamaReachable: false,
-      error: error.message,
+      error: getErrorMessage(error),
+      queueLength: aiQueue.length,
+      aiBusy: isAiProcessing,
+      maxQueueSize: MAX_QUEUE_SIZE,
     });
   }
 });
+
+/* ---------------- PROMPTS ---------------- */
 
 function buildSystemPrompt(mode, goal) {
   if (mode === "MEAL_CALORIES") {
@@ -120,7 +208,8 @@ function buildSystemPrompt(mode, goal) {
 - пиши понятно, кратко и доброжелательно;
 - обычно укладывайся в 2–5 предложений;
 - если вопрос про еду, калории или блюда — отвечай именно как помощник по питанию;
-- Не делай вид, что помнишь предыдущие сообщения пользователя, если они не переданы в текущем запросе; если для точного ответа не хватает контекста, прямо попроси пользователя кратко уточнить детали.;
+- не делай вид, что помнишь предыдущие сообщения пользователя, если они не переданы в текущем запросе;
+- если для точного ответа не хватает контекста, прямо попроси пользователя кратко уточнить детали;
 - не используй странные интерпретации и не драматизируй.`;
 }
 
@@ -136,6 +225,8 @@ function buildUserPrompt(userMessage, mode, goal) {
 Запрос пользователя:
 ${userMessage.trim()}`;
 }
+
+/* ---------------- OLLAMA REQUESTS ---------------- */
 
 async function generateText(prompt) {
   const response = await axios.post(
@@ -184,96 +275,89 @@ async function generateWithImage(prompt, fileBuffer) {
   return response.data;
 }
 
+/* ---------------- ROUTES ---------------- */
+
 app.post("/api/chat/text", async (req, res) => {
-  try {
-    const { message, mode, goal } = req.body;
+  const { message, mode, goal } = req.body;
 
-    if (!message || !message.trim()) {
-      return res.status(400).json({
-        success: false,
-        error: "Message is required",
-      });
-    }
-
-    const prompt = buildUserPrompt(
-      message,
-      mode || "DEFAULT",
-      goal || null
-    );
-
-    const ollamaData = await generateText(prompt);
-
-    const answer =
-      ollamaData?.response?.trim() || "Ollama вернул пустой ответ";
-
-    res.json({
-      success: true,
-      answer,
-      raw: ollamaData,
-    });
-  } catch (error) {
-    console.error(
-      "Text chat failed:",
-      error.response?.data || error.message
-    );
-
-    res.status(500).json({
+  if (!message || !message.trim()) {
+    return res.status(400).json({
       success: false,
-      error: error.response?.data || error.message,
+      error: "Message is required",
     });
   }
+
+  enqueueAiTask(
+    async () => {
+      const prompt = buildUserPrompt(
+        message,
+        mode || "DEFAULT",
+        goal || null
+      );
+
+      const ollamaData = await generateText(prompt);
+
+      const answer =
+        ollamaData?.response?.trim() || "Ollama вернул пустой ответ";
+
+      return {
+        success: true,
+        answer,
+        raw: ollamaData,
+      };
+    },
+    res,
+    "text-request"
+  );
 });
 
 app.post("/api/chat/image", upload.single("image"), async (req, res) => {
-  try {
-    const file = req.file;
-    const { message, mode, goal } = req.body;
+  const file = req.file;
+  const { message, mode, goal } = req.body;
 
-    if (!file) {
-      return res.status(400).json({
-        success: false,
-        error: "Image file is required",
-      });
-    }
-
-    const safeMessage =
-      message && message.trim()
-        ? message.trim()
-        : mode === "MEAL_CALORIES"
-          ? "Определи блюдо на фото и оцени его примерные калории, белки, жиры и углеводы."
-          : "Определи продукты на фото и предложи, что можно приготовить.";
-
-    const prompt = buildUserPrompt(
-      safeMessage,
-      mode || "DEFAULT",
-      goal || null
-    );
-
-    const ollamaData = await generateWithImage(prompt, file.buffer);
-
-    const answer =
-      ollamaData?.response?.trim() || "Ollama вернул пустой ответ";
-
-    res.json({
-      success: true,
-      answer,
-      raw: ollamaData,
-    });
-  } catch (error) {
-    console.error(
-      "Image chat failed:",
-      error.response?.data || error.message
-    );
-
-    res.status(500).json({
+  if (!file) {
+    return res.status(400).json({
       success: false,
-      error: error.response?.data || error.message,
+      error: "Image file is required",
     });
   }
+
+  enqueueAiTask(
+    async () => {
+      const safeMessage =
+        message && message.trim()
+          ? message.trim()
+          : mode === "MEAL_CALORIES"
+            ? "Определи блюдо на фото и оцени его примерные калории, белки, жиры и углеводы."
+            : "Определи продукты на фото и предложи, что можно приготовить.";
+
+      const prompt = buildUserPrompt(
+        safeMessage,
+        mode || "DEFAULT",
+        goal || null
+      );
+
+      const ollamaData = await generateWithImage(prompt, file.buffer);
+
+      const answer =
+        ollamaData?.response?.trim() || "Ollama вернул пустой ответ";
+
+      return {
+        success: true,
+        answer,
+        raw: ollamaData,
+      };
+    },
+    res,
+    "image-request"
+  );
 });
+
+/* ---------------- START ---------------- */
 
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
   console.log(`Using Ollama model: ${OLLAMA_MODEL}`);
   console.log(`Ollama base URL: ${OLLAMA_BASE_URL}`);
+  console.log(`Max AI queue size: ${MAX_QUEUE_SIZE}`);
 });
