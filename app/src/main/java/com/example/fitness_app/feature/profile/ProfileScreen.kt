@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -29,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -55,10 +53,9 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.time.format.TextStyle
-import androidx.compose.material3.Button
 
 
-@OptIn(ExperimentalLayoutApi::class)
+
 @Composable
 fun ProfileScreen(
     onEditClick: () -> Unit,
@@ -74,7 +71,35 @@ fun ProfileScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Профиль не найден")
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(horizontal = 24.dp)
+            ) {
+                Text(
+                    text = "Профиль не найден",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "Создайте профиль, чтобы приложение могло рассчитать ваши дневные нормы.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Button(
+                    onClick = onEditClick,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFB7FF00),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "Создать профиль",
+                        color = Color.White
+                    )
+                }
+            }
         }
         return
     }

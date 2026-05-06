@@ -144,8 +144,10 @@ suspend fun Context.saveUserProfile(profile: UserProfileData) {
         preferences[PrefsKeys.PROFILE_FATS] = profile.fats
         preferences[PrefsKeys.PROFILE_CARBS] = profile.carbs
 
-        // Чтобы главный экран использовал новую цель по калориям
         preferences[PrefsKeys.CAL_GOAL] = profile.calories
+        preferences[PrefsKeys.PROTEIN_GOAL] = profile.proteins
+        preferences[PrefsKeys.FAT_GOAL] = profile.fats
+        preferences[PrefsKeys.CARBS_GOAL] = profile.carbs
     }
 }
 
@@ -164,6 +166,9 @@ suspend fun Context.clearUserProfile() {
         preferences.remove(PrefsKeys.PROFILE_CARBS)
 
         preferences.remove(PrefsKeys.CAL_GOAL)
+        preferences.remove(PrefsKeys.PROTEIN_GOAL)
+        preferences.remove(PrefsKeys.FAT_GOAL)
+        preferences.remove(PrefsKeys.CARBS_GOAL)
         preferences.remove(PrefsKeys.CAL_EATEN)
         preferences.remove(PrefsKeys.PROTEIN_EATEN)
         preferences.remove(PrefsKeys.FAT_EATEN)
