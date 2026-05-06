@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,6 +53,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.time.format.TextStyle
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -91,6 +93,22 @@ fun ProfileScreen(
 
     val usedDaysCount = history.size
     val successfulDaysCount = history.count { it.goalReached }
+
+    val lastSevenDays = remember(history) {
+        val today = LocalDate.now()
+
+        (6 downTo 0).map { daysAgo ->
+            val date = today.minusDays(daysAgo.toLong())
+            val progress = history.firstOrNull { it.date == date.toString() }
+
+            DailyCaloriesChartItem(
+                date = date,
+                eatenCalories = progress?.eatenCalories ?: 0,
+                goalCalories = progress?.goalCalories ?: user.calories
+            )
+        }
+    }
+
 
     if (showDeleteDialog) {
         AlertDialog(
@@ -150,6 +168,10 @@ fun ProfileScreen(
                     modifier = Modifier.weight(1f, fill = true)
                 )
             }
+        }
+
+        SectionCard(title = "Калории за 7 дней") {
+            WeeklyCaloriesChart(items = lastSevenDays)
         }
 
         SectionCard(title = "Календарь выполнения цели") {
@@ -233,6 +255,100 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(34.dp))
     }
 }
+
+private data class DailyCaloriesChartItem(
+    val date: LocalDate,
+    val eatenCalories: Int,
+    val goalCalories: Int
+)
+
+@Composable
+private fun WeeklyCaloriesChart(
+    items: List<DailyCaloriesChartItem>
+) {
+    val maxCalories = items
+        .maxOfOrNull { maxOf(it.eatenCalories, it.goalCalories) }
+        ?.coerceAtLeast(1) ?: 1
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            items.forEach { item ->
+                val barProgress = (item.eatenCalories.toFloat() / maxCalories)
+                    .coerceIn(0f, 1f)
+
+                val isOverGoal = item.goalCalories > 0 &&
+                        item.eatenCalories > item.goalCalories
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    Text(
+                        text = item.eatenCalories.toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isOverGoal) {
+                            Color.Red
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(110.dp),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(((110 * barProgress).coerceAtLeast(4f)).dp)
+                                .background(
+                                    color = if (isOverGoal) {
+                                        Color.Red
+                                    } else {
+                                        MaterialTheme.colorScheme.primary
+                                    },
+                                    shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
+                                )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = item.date.dayOfWeek
+                            .getDisplayName(TextStyle.SHORT, Locale("ru"))
+                            .replaceFirstChar { it.uppercase(Locale("ru")) },
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
+        }
+
+        Text(
+            text = "Показано количество съеденных калорий за последние 7 дней.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+
+
+
 
 @Composable
 private fun ProfileHeaderCard(

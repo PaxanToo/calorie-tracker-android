@@ -251,7 +251,7 @@ fun HomeScreen() {
                 CircularProgressBar(
                     percentage = progress,
                     number = goal,
-                    color = Color(0xFF4CAF50)
+                    color = if (eaten > goal) Color.Yellow else Color(0xFF4CAF50)
                 )
 
                 Text(
@@ -906,10 +906,19 @@ private fun NutritionProgressRow(
     goal: Int,
     gradientColors: List<Color>
 ) {
+    val isOverLimit = goal > 0 && value > goal
+
     val progress = if (goal > 0) {
         (value.toFloat() / goal).coerceIn(0f, 1f)
     } else {
         0f
+    }
+
+    val textColor = if (isOverLimit) Color.Red else Color.Gray
+    val barColors = if (isOverLimit) {
+        listOf(Color.Red, Color.Red)
+    } else {
+        gradientColors
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -919,12 +928,14 @@ private fun NutritionProgressRow(
         ) {
             Text(
                 text = title,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                color = if (isOverLimit) Color.Red else MaterialTheme.colorScheme.onSurface
             )
 
             Text(
                 text = "$value / $goal г",
-                color = Color.Gray
+                color = textColor,
+                fontWeight = if (isOverLimit) FontWeight.Bold else FontWeight.Normal
             )
         }
 
@@ -942,7 +953,7 @@ private fun NutritionProgressRow(
                     .fillMaxWidth(progress)
                     .height(12.dp)
                     .background(
-                        brush = Brush.horizontalGradient(gradientColors),
+                        brush = Brush.horizontalGradient(barColors),
                         shape = RoundedCornerShape(50)
                     )
             )
