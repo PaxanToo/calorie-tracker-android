@@ -265,7 +265,10 @@ fun HomeScreen() {
                     onClick = { isFabOpen = !isFabOpen },
                     interactionSource = remember { MutableInteractionSource() },
                     elevation = FloatingActionButtonDefaults.elevation(0.dp),
+                    containerColor = Color(0xFFB7FF00),
+                    contentColor = Color.Black,
                     modifier = Modifier
+                        .size(50.dp)
                         .offset {
                             IntOffset(
                                 (90.dp.toPx()).roundToInt(),
@@ -286,6 +289,8 @@ fun HomeScreen() {
                         },
                         interactionSource = remember { MutableInteractionSource() },
                         elevation = FloatingActionButtonDefaults.elevation(0.dp),
+                        containerColor = Color(0xFFB7FF00),
+                        contentColor = Color.Black,
                         modifier = Modifier
                             .offset((-75).dp * fabProgress, (45).dp * fabProgress)
                             .scale(0.7f + 0.3f * fabProgress)
@@ -303,6 +308,8 @@ fun HomeScreen() {
                         },
                         interactionSource = remember { MutableInteractionSource() },
                         elevation = FloatingActionButtonDefaults.elevation(0.dp),
+                        containerColor = Color(0xFFB7FF00),
+                        contentColor = Color.Black,
                         modifier = Modifier
                             .offset(0.dp, (45).dp * fabProgress)
                             .scale(0.7f + 0.3f * fabProgress)
@@ -503,7 +510,7 @@ fun HomeScreen() {
                 Text("Вы действительно хотите сбросить все добавленные калории и прогресс за день?")
             },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         showResetDialog = false
                         eaten = 0
@@ -545,14 +552,24 @@ fun HomeScreen() {
                                     encodeDailyProgressList(history.sortedBy { it.date })
                             }
                         }
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFB7FF00),
+                        contentColor = Color.Red
+                    )
                 ) {
                     Text("Сбросить", color = Color.Red)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) {
-                    Text("Отмена")
+                Button(
+                    onClick = { showResetDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFB7FF00),
+                        contentColor = Color.Black
+                    )
+                ) {
+                    Text("Отмена", color = Color.Black)
                 }
             }
         )
@@ -680,9 +697,9 @@ fun AddNutritionDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
-                    val caloriesValue = calories.toIntOrNull() ?: return@TextButton
+                    val caloriesValue = calories.toIntOrNull() ?: return@Button
                     onConfirm(
                         caloriesValue,
                         parseInt(proteins),
@@ -690,14 +707,24 @@ fun AddNutritionDialog(
                         parseInt(carbs)
                     )
                     onDismiss()
-                }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFB7FF00),
+                    contentColor = Color.Black
+                )
             ) {
-                Text("Добавить")
+                Text("Добавить", color = Color.Black)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Отмена")
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFB7FF00),
+                    contentColor = Color.Black
+                )
+            ) {
+                Text("Отмена", color = Color.Black)
             }
         }
     )
@@ -828,9 +855,9 @@ fun GoalInputDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
-                    val caloriesGoal = calories.toIntOrNull() ?: return@TextButton
+                    val caloriesGoal = calories.toIntOrNull() ?: return@Button
                     onConfirm(
                         caloriesGoal,
                         parseGoal(proteins, initialProteins),
@@ -838,14 +865,24 @@ fun GoalInputDialog(
                         parseGoal(carbs, initialCarbs)
                     )
                     onDismiss()
-                }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFB7FF00),
+                    contentColor = Color.Black
+                )
             ) {
-                Text("Сохранить")
+                Text("Сохранить", color = Color.Black)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Отмена")
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFB7FF00),
+                    contentColor = Color.Black
+                )
+            ) {
+                Text("Отмена", color = Color.Black)
             }
         }
     )

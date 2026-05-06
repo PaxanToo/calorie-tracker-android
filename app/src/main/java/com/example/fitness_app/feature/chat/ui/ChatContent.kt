@@ -75,7 +75,7 @@ fun ChatContent(
     var goalMenuExpanded by remember { mutableStateOf(false) }
 
     val rotation by animateFloatAsState(
-        targetValue = if (modeMenuExpanded) 45f else 0f,
+        targetValue = if (modeMenuExpanded || goalMenuExpanded) 45f else 0f,
         animationSpec = tween(250),
         label = "mode_menu_rotation"
     )
@@ -317,7 +317,14 @@ fun ChatContent(
             }
 
             FloatingActionButton(
-                onClick = { modeMenuExpanded = !modeMenuExpanded },
+                onClick = {
+                    if (goalMenuExpanded) {
+                        goalMenuExpanded = false
+                        modeMenuExpanded = false
+                    } else {
+                        modeMenuExpanded = !modeMenuExpanded
+                    }
+                },
                 shape = CircleShape,
                 elevation = FloatingActionButtonDefaults.elevation(0.dp),
                 containerColor = MaterialTheme.colorScheme.primary,

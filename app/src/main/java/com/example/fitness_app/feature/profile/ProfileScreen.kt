@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -54,6 +55,8 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.time.format.TextStyle
+import androidx.compose.material3.Button
+
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -116,23 +119,31 @@ fun ProfileScreen(
             title = { Text("Удалить профиль?") },
             text = { Text("Все данные профиля будут удалены с устройства.") },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         showDeleteDialog = false
                         CoroutineScope(Dispatchers.Main).launch {
                             context.clearUserProfile()
                             onProfileDeleted()
                         }
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFB7FF00),
+                        contentColor = Color.Red
+                    )
                 ) {
-                    Text("Удалить")
+                    Text("Удалить", color = Color.Red)
                 }
             },
             dismissButton = {
-                TextButton(
-                    onClick = { showDeleteDialog = false }
+                Button(
+                    onClick = { showDeleteDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFB7FF00),
+                        contentColor = Color.Black
+                    )
                 ) {
-                    Text("Отмена")
+                    Text("Отмена", color = Color.Black)
                 }
             }
         )
