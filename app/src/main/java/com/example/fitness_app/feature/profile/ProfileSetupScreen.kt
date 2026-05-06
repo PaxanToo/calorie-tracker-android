@@ -1,5 +1,6 @@
 package com.example.fitness_app.feature.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,18 +44,16 @@ import com.example.fitness_app.core.datastore.UserProfileData
 import com.example.fitness_app.core.datastore.saveUserProfile
 import com.example.fitness_app.core.datastore.userProfileFlow
 import com.example.fitness_app.domain.model.ActivityLevel
-import com.example.fitness_app.domain.model.AgeGroup
 import com.example.fitness_app.domain.model.Gender
 import com.example.fitness_app.domain.model.Goal
-import com.example.fitness_app.domain.model.HeightGroup
-import com.example.fitness_app.domain.model.WeightGroup
 import com.example.fitness_app.domain.nutrition.NutritionCalculator
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.KeyboardType
 
 @Composable
 fun ProfileSetupScreen(
@@ -64,40 +63,36 @@ fun ProfileSetupScreen(
     val existingProfile by context.userProfileFlow().collectAsState(initial = null)
     val scope = rememberCoroutineScope()
 
-    var step by remember { mutableIntStateOf(0) }
-
     var gender by remember(existingProfile) { mutableStateOf(existingProfile?.gender) }
-    var age by remember(existingProfile) { mutableStateOf(existingProfile?.age) }
-    var height by remember(existingProfile) { mutableStateOf(existingProfile?.height) }
-    var weight by remember(existingProfile) { mutableStateOf(existingProfile?.weight) }
+    var ageText by remember(existingProfile) { mutableStateOf(existingProfile?.age?.toString() ?: "") }
+    var heightText by remember(existingProfile) { mutableStateOf(existingProfile?.height?.toString() ?: "") }
+    var weightText by remember(existingProfile) { mutableStateOf(existingProfile?.weight?.toString() ?: "") }
     var activity by remember(existingProfile) { mutableStateOf(existingProfile?.activity) }
     var goal by remember(existingProfile) { mutableStateOf(existingProfile?.goal) }
 
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     var isSaving by remember { mutableStateOf(false) }
 
-    val canGoNext = when (step) {
-        0 -> gender != null
-        1 -> age != null
-        2 -> height != null
-        3 -> weight != null
-        4 -> activity != null
-        5 -> goal != null
-        else -> true
-    }
+    val ageValue = ageText.toIntOrNull()
+    val heightValue = heightText.toIntOrNull()
+    val weightValue = weightText.toIntOrNull()
 
     val calculationResult = if (
         gender != null &&
-        age != null &&
-        height != null &&
-        weight != null &&
+        ageValue != null &&
+        heightValue != null &&
+        weightValue != null &&
         activity != null &&
-        goal != null
+        goal != null &&
+        ageValue in 9..100 &&
+        heightValue in 120..230 &&
+        weightValue in 30..250
     ) {
         NutritionCalculator.calculate(
             gender = gender!!,
-            age = age!!,
-            height = height!!,
-            weight = weight!!,
+            age = ageValue,
+            height = heightValue,
+            weight = weightValue,
             activity = activity!!,
             goal = goal!!
         )
@@ -110,173 +105,228 @@ fun ProfileSetupScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(start = 24.dp, end = 24.dp, top = 48.dp, bottom = 44.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        Column {
+        Text(
+            text = if (existingProfile == null) { "Анкета профиля" } else { "Редактирование профиля" },
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        SelectionStep(
+            title = "Ваш пол",
+            options = Gender.values().toList(),
+            label = { genderLabel(it) },
+            selected = gender,
+            onSelect = {
+                gender = it
+                errorMessage = null
+            }
+        )
+
+        InputStep(
+            title = "Возраст",
+            value = ageText,
+            onValueChange = {
+                ageText = it.filter { char -> char.isDigit() }
+                errorMessage = null
+            },
+            placeholder = "Например: 22",
+            suffix = "лет"
+        )
+
+        InputStep(
+            title = "Рост",
+            value = heightText,
+            onValueChange = {
+                heightText = it.filter { char -> char.isDigit() }
+                errorMessage = null
+            },
+            placeholder = "Например: 178",
+            suffix = "см"
+        )
+
+        InputStep(
+            title = "Вес",
+            value = weightText,
+            onValueChange = {
+                weightText = it.filter { char -> char.isDigit() }
+                errorMessage = null
+            },
+            placeholder = "Например: 76",
+            suffix = "кг"
+        )
+
+        SelectionStep(
+            title = "Уровень активности",
+            options = ActivityLevel.values().toList(),
+            label = { it.label },
+            selected = activity,
+            onSelect = {
+                activity = it
+                errorMessage = null
+            }
+        )
+
+        SelectionStep(
+            title = "Цель",
+            options = Goal.values().toList(),
+            label = { it.label },
+            selected = goal,
+            onSelect = {
+                goal = it
+                errorMessage = null
+            }
+        )
+
+        if (errorMessage != null) {
             Text(
-                text = if (existingProfile == null) "Анкета профиля" else "Редактирование профиля",
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Bold
+                text = errorMessage ?: "",
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 15.sp
             )
+        }
 
-            Spacer(modifier = Modifier.height(28.dp))
-
-            when (step) {
-                0 -> SelectionStep(
-                    title = "Ваш пол",
-                    options = Gender.values().toList(),
-                    label = {
-                        when (it) {
-                            Gender.MALE -> "Мужской"
-                            Gender.FEMALE -> "Женский"
-                        }
-                    },
-                    selected = gender,
-                    onSelect = { gender = it }
+        if (calculationResult != null) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Ваши рассчитанные нормы",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
                 )
 
-                1 -> SelectionStep(
-                    title = "Возраст",
-                    options = AgeGroup.values().toList(),
-                    label = { it.label },
-                    selected = age,
-                    onSelect = { age = it }
-                )
-
-                2 -> SelectionStep(
-                    title = "Рост",
-                    options = HeightGroup.values().toList(),
-                    label = { it.label },
-                    selected = height,
-                    onSelect = { height = it }
-                )
-
-                3 -> SelectionStep(
-                    title = "Вес",
-                    options = WeightGroup.values().toList(),
-                    label = { it.label },
-                    selected = weight,
-                    onSelect = { weight = it }
-                )
-
-                4 -> SelectionStep(
-                    title = "Уровень активности",
-                    options = ActivityLevel.values().toList(),
-                    label = { it.label },
-                    selected = activity,
-                    onSelect = { activity = it }
-                )
-
-                5 -> SelectionStep(
-                    title = "Цель",
-                    options = Goal.values().toList(),
-                    label = { it.label },
-                    selected = goal,
-                    onSelect = { goal = it }
-                )
-
-                6 -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            text = "Проверьте данные",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        SummaryRow("Пол", genderLabel(gender))
-                        SummaryRow("Возраст", age?.label ?: "-")
-                        SummaryRow("Рост", height?.label ?: "-")
-                        SummaryRow("Вес", weight?.label ?: "-")
-                        SummaryRow("Активность", activity?.label ?: "-")
-                        SummaryRow("Цель", goal?.label ?: "-")
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        if (calculationResult != null) {
-                            Text(
-                                text = "Ваши рассчитанные нормы",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            SummaryRow("Калории", "${calculationResult.calories} ккал")
-                            SummaryRow("Белки", "${calculationResult.proteins} г")
-                            SummaryRow("Жиры", "${calculationResult.fats} г")
-                            SummaryRow("Углеводы", "${calculationResult.carbs} г")
-                        }
-                    }
-                }
+                SummaryRow("Калории", "${calculationResult.calories} ккал")
+                SummaryRow("Белки", "${calculationResult.proteins} г")
+                SummaryRow("Жиры", "${calculationResult.fats} г")
+                SummaryRow("Углеводы", "${calculationResult.carbs} г")
             }
         }
 
-        Column(
-            modifier = Modifier.padding(top = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        Button(
+            onClick = {
+                val validatedAge = ageText.toIntOrNull()
+                val validatedHeight = heightText.toIntOrNull()
+                val validatedWeight = weightText.toIntOrNull()
+
+                when {
+                    gender == null -> {
+                        errorMessage = "Выберите пол"
+                        return@Button
+                    }
+
+                    validatedAge == null || validatedAge !in 9..100 -> {
+                        errorMessage = "Введите корректный возраст от 9 до 100 лет"
+                        return@Button
+                    }
+
+                    validatedHeight == null || validatedHeight !in 120..230 -> {
+                        errorMessage = "Введите корректный рост от 120 до 230 см"
+                        return@Button
+                    }
+
+                    validatedWeight == null || validatedWeight !in 30..250 -> {
+                        errorMessage = "Введите корректный вес от 30 до 250 кг"
+                        return@Button
+                    }
+
+                    activity == null -> {
+                        errorMessage = "Выберите уровень активности"
+                        return@Button
+                    }
+
+                    goal == null -> {
+                        errorMessage = "Выберите цель"
+                        return@Button
+                    }
+                }
+
+                val finalAge = validatedAge
+                val finalHeight = validatedHeight
+                val finalWeight = validatedWeight
+
+                if (finalAge == null || finalHeight == null || finalWeight == null) {
+                    errorMessage = "Проверьте возраст, рост и вес"
+                    return@Button
+                }
+
+                val result = NutritionCalculator.calculate(
+                    gender = gender!!,
+                    age = finalAge,
+                    height = finalHeight,
+                    weight = finalWeight,
+                    activity = activity!!,
+                    goal = goal!!
+                )
+
+                val profile = UserProfileData(
+                    gender = gender!!,
+                    age = finalAge,
+                    height = finalHeight,
+                    weight = finalWeight,
+                    activity = activity!!,
+                    goal = goal!!,
+                    calories = result.calories,
+                    proteins = result.proteins,
+                    fats = result.fats,
+                    carbs = result.carbs
+                )
+
+                scope.launch {
+                    isSaving = true
+                    context.saveUserProfile(profile)
+                    isSaving = false
+                    onSaved()
+                }
+            },
+            enabled = !isSaving,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                if (step > 0) {
-                    TextButton(
-                        onClick = { step-- },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = "Назад",
-                            fontSize = 18.sp
-                        )
-                    }
-                }
-
-                Button(
-                    onClick = {
-                        if (step < 6) {
-                            step++
-                        } else {
-                            val result = calculationResult ?: return@Button
-
-                            val profile = UserProfileData(
-                                gender = gender!!,
-                                age = age!!,
-                                height = height!!,
-                                weight = weight!!,
-                                activity = activity!!,
-                                goal = goal!!,
-                                calories = result.calories,
-                                proteins = result.proteins,
-                                fats = result.fats,
-                                carbs = result.carbs
-                            )
-
-                            scope.launch {
-                                isSaving = true
-                                context.saveUserProfile(profile)
-                                isSaving = false
-                                onSaved()
-                            }
-                        }
-                    },
-                    enabled = canGoNext && !isSaving,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    if (isSaving) {
-                        CircularProgressIndicator()
-                    } else {
-                        Text(
-                            text = if (step < 6) "Далее" else "Сохранить",
-                            fontSize = 18.sp
-                        )
-                    }
-                }
+            if (isSaving) {
+                CircularProgressIndicator()
+            } else {
+                Text(
+                    text = "Сохранить",
+                    fontSize = 18.sp
+                )
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun InputStep(
+    title: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    suffix: String
+) {
+    Column {
+        Text(
+            text = title,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = {
+                Text(placeholder)
+            },
+            suffix = {
+                Text(suffix)
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -291,11 +341,11 @@ fun <T> SelectionStep(
     Column {
         Text(
             text = title,
-            fontSize = 26.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             options.forEach { item ->
@@ -339,7 +389,7 @@ private fun SelectionOptionCard(
             ),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        border = androidx.compose.foundation.BorderStroke(1.5.dp, borderColor),
+        border = BorderStroke(1.5.dp, borderColor),
         elevation = CardDefaults.cardElevation(
             defaultElevation = if (selected) 3.dp else 1.dp
         )
@@ -357,7 +407,11 @@ private fun SelectionOptionCard(
             Text(
                 text = text,
                 fontSize = 18.sp,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+                fontWeight = if (selected) {
+                    FontWeight.SemiBold
+                } else {
+                    FontWeight.Medium
+                }
             )
         }
     }
@@ -418,6 +472,7 @@ private fun SummaryRow(
                 text = label,
                 fontSize = 17.sp
             )
+
             Text(
                 text = value,
                 fontSize = 17.sp,

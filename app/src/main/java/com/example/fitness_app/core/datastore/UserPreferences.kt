@@ -7,11 +7,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.preferences.core.edit
 import com.example.fitness_app.domain.model.ActivityLevel
-import com.example.fitness_app.domain.model.AgeGroup
 import com.example.fitness_app.domain.model.Gender
 import com.example.fitness_app.domain.model.Goal
-import com.example.fitness_app.domain.model.HeightGroup
-import com.example.fitness_app.domain.model.WeightGroup
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import com.example.fitness_app.core.datastore.decodeDailyProgressList
@@ -21,9 +18,9 @@ private val Context.dataStore by preferencesDataStore(name = "calories_prefs")
 
 data class UserProfileData(
     val gender: Gender,
-    val age: AgeGroup,
-    val height: HeightGroup,
-    val weight: WeightGroup,
+    val age: Int,
+    val height: Int,
+    val weight: Int,
     val activity: ActivityLevel,
     val goal: Goal,
     val calories: Int,
@@ -39,9 +36,9 @@ object PrefsKeys {
     val CAL_ENTRIES = stringPreferencesKey("cal_entries")
     val HAS_PROFILE = booleanPreferencesKey("has_profile")
     val PROFILE_GENDER = stringPreferencesKey("profile_gender")
-    val PROFILE_AGE = stringPreferencesKey("profile_age")
-    val PROFILE_HEIGHT = stringPreferencesKey("profile_height")
-    val PROFILE_WEIGHT = stringPreferencesKey("profile_weight")
+    val PROFILE_AGE = intPreferencesKey("profile_age_value")
+    val PROFILE_HEIGHT = intPreferencesKey("profile_height_value")
+    val PROFILE_WEIGHT = intPreferencesKey("profile_weight_value")
     val PROFILE_ACTIVITY = stringPreferencesKey("profile_activity")
     val PROFILE_GOAL = stringPreferencesKey("profile_goal")
     val PROFILE_CALORIES = intPreferencesKey("profile_calories")
@@ -104,14 +101,11 @@ fun Context.userProfileFlow(): Flow<UserProfileData?> {
         val gender = preferences[PrefsKeys.PROFILE_GENDER]
             ?.let { enumValueOrNull<Gender>(it) } ?: return@map null
 
-        val age = preferences[PrefsKeys.PROFILE_AGE]
-            ?.let { enumValueOrNull<AgeGroup>(it) } ?: return@map null
+        val age = preferences[PrefsKeys.PROFILE_AGE] ?: return@map null
 
-        val height = preferences[PrefsKeys.PROFILE_HEIGHT]
-            ?.let { enumValueOrNull<HeightGroup>(it) } ?: return@map null
+        val height = preferences[PrefsKeys.PROFILE_HEIGHT] ?: return@map null
 
-        val weight = preferences[PrefsKeys.PROFILE_WEIGHT]
-            ?.let { enumValueOrNull<WeightGroup>(it) } ?: return@map null
+        val weight = preferences[PrefsKeys.PROFILE_WEIGHT] ?: return@map null
 
         val activity = preferences[PrefsKeys.PROFILE_ACTIVITY]
             ?.let { enumValueOrNull<ActivityLevel>(it) } ?: return@map null
@@ -139,9 +133,9 @@ suspend fun Context.saveUserProfile(profile: UserProfileData) {
         preferences[PrefsKeys.HAS_PROFILE] = true
 
         preferences[PrefsKeys.PROFILE_GENDER] = profile.gender.name
-        preferences[PrefsKeys.PROFILE_AGE] = profile.age.name
-        preferences[PrefsKeys.PROFILE_HEIGHT] = profile.height.name
-        preferences[PrefsKeys.PROFILE_WEIGHT] = profile.weight.name
+        preferences[PrefsKeys.PROFILE_AGE] = profile.age
+        preferences[PrefsKeys.PROFILE_HEIGHT] = profile.height
+        preferences[PrefsKeys.PROFILE_WEIGHT] = profile.weight
         preferences[PrefsKeys.PROFILE_ACTIVITY] = profile.activity.name
         preferences[PrefsKeys.PROFILE_GOAL] = profile.goal.name
 
