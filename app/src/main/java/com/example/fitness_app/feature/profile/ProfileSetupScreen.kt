@@ -54,6 +54,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import com.example.fitness_app.core.utils.vibrateShort
 
 @Composable
 fun ProfileSetupScreen(
@@ -62,6 +65,7 @@ fun ProfileSetupScreen(
     val context = LocalContext.current
     val existingProfile by context.userProfileFlow().collectAsState(initial = null)
     val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
 
     var gender by remember(existingProfile) { mutableStateOf(existingProfile?.gender) }
     var ageText by remember(existingProfile) { mutableStateOf(existingProfile?.age?.toString() ?: "") }
@@ -276,6 +280,7 @@ fun ProfileSetupScreen(
                     context.saveUserProfile(profile)
                     isSaving = false
                     onSaved()
+                    context.vibrateShort()
                 }
             },
             enabled = !isSaving,

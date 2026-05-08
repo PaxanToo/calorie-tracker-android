@@ -57,6 +57,16 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.fitness_app.R
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
+import com.example.fitness_app.core.utils.vibrateShort
+import androidx.compose.ui.platform.LocalContext
+
 
 @Composable
 fun ChatContent(
@@ -74,6 +84,8 @@ fun ChatContent(
     var modeMenuExpanded by remember { mutableStateOf(false) }
     var goalMenuExpanded by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+
     val rotation by animateFloatAsState(
         targetValue = if (modeMenuExpanded || goalMenuExpanded) 45f else 0f,
         animationSpec = tween(250),
@@ -81,6 +93,12 @@ fun ChatContent(
     )
 
     val listState = rememberLazyListState()
+
+    LaunchedEffect(uiState.showAchievementAnimation) {
+        if (uiState.showAchievementAnimation) {
+            context.vibrateShort()
+        }
+    }
 
     LaunchedEffect(uiState.messages.size, uiState.isLoading) {
         val extraItems = if (uiState.isLoading) 1 else 0
@@ -337,6 +355,15 @@ fun ChatContent(
                 )
             }
         }
+        AchievementTopBanner(
+            visible = uiState.showAchievementAnimation,
+            title = "Вот он какой - AI-помощник",
+            message = "Блюдо из AI-чата добавлено в дневник",
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 24.dp, start = 16.dp, end = 16.dp)
+        )
+
         if (uiState.showAchievementAnimation) {
             val composition by rememberLottieComposition(
                 LottieCompositionSpec.RawRes(R.raw.achievement_ai_meal)
@@ -349,6 +376,59 @@ fun ChatContent(
                     .align(Alignment.Center)
                     .size(240.dp)
             )
+        }
+    }
+}
+
+@Composable
+private fun AchievementTopBanner(
+    visible: Boolean,
+    title: String,
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = slideInVertically(
+            initialOffsetY = { -it }
+        ) + fadeIn(),
+        exit = slideOutVertically(
+            targetOffsetY = { -it }
+        ) + fadeOut()
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Black.copy(alpha = 0.92f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Достижение получено",
+                    color = Color(0xFFB7FF00),
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                Text(
+                    text = message,
+                    color = Color.White.copy(alpha = 0.75f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }

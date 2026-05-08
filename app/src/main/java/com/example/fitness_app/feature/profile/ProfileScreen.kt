@@ -53,7 +53,9 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.time.format.TextStyle
-
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import com.example.fitness_app.core.utils.vibrateShort
 
 
 @Composable
@@ -65,6 +67,7 @@ fun ProfileScreen(
     val profile by context.userProfileFlow().collectAsState(initial = null)
     val history by context.dailyProgressHistoryFlow().collectAsState(initial = emptyList())
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
 
     if (profile == null) {
         Box(
@@ -146,6 +149,8 @@ fun ProfileScreen(
             confirmButton = {
                 Button(
                     onClick = {
+                        context.vibrateShort()
+
                         showDeleteDialog = false
                         CoroutineScope(Dispatchers.Main).launch {
                             context.clearUserProfile()
@@ -281,7 +286,8 @@ fun ProfileScreen(
             }
 
             OutlinedButton(
-                onClick = { showDeleteDialog = true },
+                onClick = { context.vibrateShort()
+                    showDeleteDialog = true  },
                 modifier = Modifier.weight(1f)
             ) {
                 Text("Удалить")

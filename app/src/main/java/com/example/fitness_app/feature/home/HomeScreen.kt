@@ -52,6 +52,15 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import com.example.fitness_app.core.utils.vibrateShort
+import com.example.fitness_app.core.utils.vibrateShort
 
 @Composable
 fun CircularProgressBar(
@@ -105,6 +114,8 @@ fun HomeScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    val haptic = LocalHapticFeedback.current
+
     val profile by context.userProfileFlow().collectAsState(initial = null)
 
     val timeFormatter = remember {
@@ -126,6 +137,8 @@ fun HomeScreen() {
     var achievementShown by remember { mutableStateOf(false) }
     var shownGoalCompletionMilestone by remember { mutableStateOf<Int?>(null) }
     var achievementAnimationResId by remember { mutableIntStateOf(R.raw.achievement_goal_1) }
+    var achievementTitle by remember { mutableStateOf("") }
+    var achievementMessage by remember { mutableStateOf("") }
 
     var showAddDialog by remember { mutableStateOf(false) }
     var showGoalDialog by remember { mutableStateOf(false) }
@@ -227,6 +240,18 @@ fun HomeScreen() {
                 else -> R.raw.achievement_goal_1
             }
 
+            val achievementInfo = when (unlockedMilestone) {
+                7 -> "7 раз поешь 7 раз отметь" to "Дневная цель выполнена 7 раз"
+                3 -> "На пути к успеху" to "Дневная цель выполнена 3 раза"
+                1 -> "Первый шаг" to "Дневная цель выполнена впервые"
+                else -> "Цель выполнена" to "Дневная цель по калориям достигнута"
+            }
+
+            achievementTitle = achievementInfo.first
+            achievementMessage = achievementInfo.second
+
+            context.vibrateShort()
+
             showAchievement = true
 
             unlockedMilestone?.let {
@@ -322,6 +347,7 @@ fun HomeScreen() {
                 if (fabProgress > 0f) {
                     FloatingActionButton(
                         onClick = {
+                            context.vibrateShort()
                             isFabOpen = false
                             showResetDialog = true
                         },
@@ -489,6 +515,15 @@ fun HomeScreen() {
             )
         }
 
+        AchievementTopBanner(
+            visible = showAchievement,
+            title = achievementTitle,
+            message = achievementMessage,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 24.dp, start = 16.dp, end = 16.dp)
+        )
+
         if (showAchievement) {
             val composition by rememberLottieComposition(
                 LottieCompositionSpec.RawRes(achievementAnimationResId)
@@ -497,7 +532,9 @@ fun HomeScreen() {
             LottieAnimation(
                 composition = composition,
                 iterations = 1,
-                modifier = Modifier.size(250.dp)
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(250.dp)
             )
         }
     }
@@ -512,6 +549,7 @@ fun HomeScreen() {
             confirmButton = {
                 Button(
                     onClick = {
+                        context.vibrateShort()
                         showResetDialog = false
                         eaten = 0
                         proteinEaten = 0
@@ -887,6 +925,62 @@ fun GoalInputDialog(
         }
     )
 }
+
+@Composable
+private fun AchievementTopBanner(
+    visible: Boolean,
+    title: String,
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = slideInVertically(
+            initialOffsetY = { -it }
+        ) + fadeIn(),
+        exit = slideOutVertically(
+            targetOffsetY = { -it }
+        ) + fadeOut()
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Black.copy(alpha = 0.92f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Достижение получено",
+                    color = Color(0xFFB7FF00),
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                Text(
+                    text = message,
+                    color = Color.White.copy(alpha = 0.75f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
+}
+
+
+
 
 @Composable
 private fun NutritionProgressBlock(

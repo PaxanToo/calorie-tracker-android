@@ -76,6 +76,13 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import com.example.fitness_app.core.utils.vibrateShort
 
 private const val CATEGORY_ALL = "Все"
 
@@ -86,6 +93,7 @@ fun FoodScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
+    val haptic = LocalHapticFeedback.current
 
     var selectedProduct by remember { mutableStateOf<FoodProductEntity?>(null) }
     var showDialog by remember { mutableStateOf(false) }
@@ -233,6 +241,15 @@ fun FoodScreen(
             }
         }
 
+        AchievementTopBanner(
+            visible = showAchievementAnimation,
+            title = "Первый продукт",
+            message = "Вы добавили еду через экран продуктов",
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 24.dp, start = 16.dp, end = 16.dp)
+        )
+
         if (showAchievementAnimation) {
             val composition by rememberLottieComposition(
                 LottieCompositionSpec.RawRes(R.raw.achievement_first_product)
@@ -297,6 +314,8 @@ fun FoodScreen(
                                     scope = scope,
                                     timeFormatter = timeFormatter,
                                     onFirstProductAchievementUnlocked = {
+                                        context.vibrateShort()
+
                                         showAchievementAnimation = true
                                         scope.launch {
                                             delay(1800)
@@ -321,6 +340,8 @@ fun FoodScreen(
                                     scope = scope,
                                     timeFormatter = timeFormatter,
                                     onFirstProductAchievementUnlocked = {
+                                        context.vibrateShort()
+
                                         showAchievementAnimation = true
                                         scope.launch {
                                             delay(1800)
@@ -345,6 +366,8 @@ fun FoodScreen(
                                     scope = scope,
                                     timeFormatter = timeFormatter,
                                     onFirstProductAchievementUnlocked = {
+                                        context.vibrateShort()
+
                                         showAchievementAnimation = true
                                         scope.launch {
                                             delay(1800)
@@ -374,6 +397,62 @@ fun FoodScreen(
         )
     }
 }
+
+@Composable
+private fun AchievementTopBanner(
+    visible: Boolean,
+    title: String,
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = slideInVertically(
+            initialOffsetY = { -it }
+        ) + fadeIn(),
+        exit = slideOutVertically(
+            targetOffsetY = { -it }
+        ) + fadeOut()
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Black.copy(alpha = 0.92f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Достижение получено",
+                    color = Color(0xFFB7FF00),
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                Text(
+                    text = message,
+                    color = Color.White.copy(alpha = 0.75f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
+}
+
+
+
 
 @Composable
 private fun FoodProductCard(
