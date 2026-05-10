@@ -9,7 +9,7 @@ import android.app.Application
 
 object ProxyChatFeatureProvider {
 
-    private const val BASE_URL = "https://renewal.fxtun.dev"
+    private const val BASE_URL = "https://geek.fxtun.dev"
 
     private val gson = Gson()
 
