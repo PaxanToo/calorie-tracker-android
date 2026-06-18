@@ -4,6 +4,7 @@ import android.net.Uri
 
 
 data class NutritionInfoUi(
+    val weight: Int,
     val calories: Int,
     val proteins: Int,
     val fats: Int,

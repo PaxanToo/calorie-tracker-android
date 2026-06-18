@@ -9,15 +9,15 @@ import android.app.Application
 
 object ProxyChatFeatureProvider {
 
-    private const val BASE_URL = "https://geek.fxtun.dev"
+    private const val BASE_URL = "https://12418ca8-75ce-4e3d-aee9-7cfe1d62e811.tunnel4.com"
 
     private val gson = Gson()
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-        .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
-        .writeTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
-        .callTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+        .connectTimeout(180, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(180, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(180, java.util.concurrent.TimeUnit.SECONDS)
+        .callTimeout(180, java.util.concurrent.TimeUnit.SECONDS)
         .build()
 
     private val api = ProxyChatApi(

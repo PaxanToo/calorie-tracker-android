@@ -171,7 +171,7 @@ fun ChatContent(
             if (uiState.errorMessage != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = uiState.errorMessage,
+                    text = getFriendlyErrorMessage(uiState.errorMessage),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -430,5 +430,16 @@ private fun AchievementTopBanner(
                 )
             }
         }
+    }
+}
+
+private fun getFriendlyErrorMessage(rawMessage: String?): String {
+    return when {
+        rawMessage == null -> ""
+        rawMessage.contains("timeout", ignoreCase = true) -> "Сервер не отвечает. Проверьте подключение к интернету и попробуйте позже."
+        rawMessage.contains("429", ignoreCase = true) -> "Сервер временно перегружен. Подождите немного и попробуйте снова."
+        rawMessage.contains("500", ignoreCase = true) || rawMessage.contains("502", ignoreCase = true) -> "Ошибка на сервере. Попробуйте позже."
+        rawMessage.contains("network", ignoreCase = true) || rawMessage.contains("internet", ignoreCase = true) -> "Нет подключения к интернету."
+        else -> "Не удалось получить ответ от ИИ. Проверьте соединение."
     }
 }

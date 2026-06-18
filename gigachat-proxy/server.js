@@ -17,11 +17,10 @@ const upload = multer({
   },
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen3.5:4b";
 
-/* ---------------- AI QUEUE ---------------- */
 
 const MAX_QUEUE_SIZE = Number(process.env.MAX_QUEUE_SIZE || 10);
 
@@ -99,8 +98,6 @@ async function processAiQueue() {
   }
 }
 
-/* ---------------- HEALTH ---------------- */
-
 app.get("/health", async (req, res) => {
   try {
     const response = await axios.get(`${OLLAMA_BASE_URL}/api/tags`, {
@@ -131,13 +128,12 @@ app.get("/health", async (req, res) => {
   }
 });
 
-/* ---------------- PROMPTS ---------------- */
-
 function buildSystemPrompt(mode, goal) {
   if (mode === "MEAL_CALORIES") {
     return `Ты — AI-помощник в мобильном приложении по питанию.
 
-Пользователь отправляет фотографию блюда.
+Пользователь отправляет фотографию готового блюда.
+В кадре может быть столовая ложка или вилка как калибровочный эталон размера (~20 см длина).
 Твоя задача:
 - определить, что это может быть за блюдо или набор продуктов на тарелке;
 - дать примерную оценку КБЖУ всего блюда или порции на фото;
@@ -146,11 +142,11 @@ function buildSystemPrompt(mode, goal) {
 - отвечать кратко, понятно и на русском языке.
 
 Сделай ответ СТРОГО в такой структуре:
-
 1. Что на фото
 Коротко опиши, что, вероятнее всего, изображено.
 
 2. Примерная оценка КБЖУ
+Вес: ~N г
 Калории: ~N ккал
 Белки: ~N г
 Жиры: ~N г
@@ -175,17 +171,17 @@ function buildSystemPrompt(mode, goal) {
 
     return `Ты — AI-помощник в мобильном приложении по питанию.
 
-Пользователь отправляет фотографию набора продуктов.
+Пользователь отправляет фотографию набора продуктов. В кадре может быть столовая ложка или вилка как калибровочный эталон размера (~20 см длина).
 Твоя задача:
 - определить, какие продукты вероятнее всего видны на фото;
 - не выдумывать экзотические ингредиенты, если их не видно;
 - предложить 1–3 простых блюда, которые реально можно приготовить из этих продуктов;
 - учитывать цель пользователя: ${goalText};
-- если каких-то ингредиентов не хватает, коротко укажи, что можно добавить;
+- если каких-то ингредиентов не хватает, коротко укажи, что можно добавить или чем заменить;
 - отвечать на русском языке;
 - отвечать понятно, практично и без лишней воды.
 
-Сделай ответ в такой структуре:
+Сделай ответ СТРОГО в такой структуре:
 1. Что видно на фото
 2. Что можно приготовить
 3. Короткий комментарий по цели пользователя
@@ -226,7 +222,6 @@ function buildUserPrompt(userMessage, mode, goal) {
 ${userMessage.trim()}`;
 }
 
-/* ---------------- OLLAMA REQUESTS ---------------- */
 
 async function generateText(prompt) {
   const response = await axios.post(
@@ -275,7 +270,6 @@ async function generateWithImage(prompt, fileBuffer) {
   return response.data;
 }
 
-/* ---------------- ROUTES ---------------- */
 
 app.post("/api/chat/text", async (req, res) => {
   const { message, mode, goal } = req.body;
@@ -324,24 +318,17 @@ app.post("/api/chat/image", upload.single("image"), async (req, res) => {
 
   enqueueAiTask(
     async () => {
-      const safeMessage =
-        message && message.trim()
-          ? message.trim()
-          : mode === "MEAL_CALORIES"
-            ? "Определи блюдо на фото и оцени его примерные калории, белки, жиры и углеводы."
-            : "Определи продукты на фото и предложи, что можно приготовить.";
-
-      const prompt = buildUserPrompt(
-        safeMessage,
-        mode || "DEFAULT",
-        goal || null
-      );
-
+      let userMessage = message;
+      if (!userMessage || !userMessage.trim()) {
+        if (mode === "MEAL_CALORIES") {
+          userMessage = "Определи блюдо на фото и оцени его примерные калории, белки, жиры и углеводы.";
+        } else {
+          userMessage = "Определи продукты на фото и предложи, что можно приготовить.";
+        }
+      }
+      const prompt = buildUserPrompt(userMessage, mode || "DEFAULT", goal || null);
       const ollamaData = await generateWithImage(prompt, file.buffer);
-
-      const answer =
-        ollamaData?.response?.trim() || "Ollama вернул пустой ответ";
-
+      const answer = ollamaData?.response?.trim() || "Ollama вернул пустой ответ";
       return {
         success: true,
         answer,
@@ -353,7 +340,7 @@ app.post("/api/chat/image", upload.single("image"), async (req, res) => {
   );
 });
 
-/* ---------------- START ---------------- */
+
 
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);

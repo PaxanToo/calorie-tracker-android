@@ -310,18 +310,21 @@ class ChatViewModel(
     }
 
     private fun parseNutritionFromText(text: String): NutritionInfoUi? {
+        val weight = extractInt(text, "Вес")
         val calories = extractInt(text, "Калории")
         val proteins = extractInt(text, "Белки")
         val fats = extractInt(text, "Жиры")
         val carbs = extractInt(text, "Углеводы")
 
         return if (
+            weight != null &&
             calories != null &&
             proteins != null &&
             fats != null &&
             carbs != null
         ) {
             NutritionInfoUi(
+                weight = weight,
                 calories = calories,
                 proteins = proteins,
                 fats = fats,
